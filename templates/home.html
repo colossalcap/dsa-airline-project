@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Path Finder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="../static/map/leaflet.css">
+    <script src="../static/map/leaflet.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Flight Path Finder</h1>
+    </div>
+
+    <div class="container">
+
+        <div class="input-card">
+            <div class="input-item">
+                <label for="startAirport">Departure Airport</label>
+                <select id="startAirport"></select>
+            </div>
+            <div class="input-item">
+                <label for="endAirport">Arrival Airport</label>
+                <select id="endAirport"></select>
+            </div>
+            <button onclick="queryShortestRoute()">Find Path</button>
+            <div class="error-msg" id="errorMsg"></div>
+
+            <div class="result" id="resultCard">
+                <h4>Shortest Path Result</h4>
+                <p>Route: <span id="routePath"></span></p>
+                <p>Total Duration: <span id="totalTime"></span> mins</p>
+            </div>
+        </div>
+
+        <div class="map-card">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
