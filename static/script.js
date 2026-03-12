@@ -118,7 +118,14 @@ async function queryShortestRoute() {
 function renderResult(data) {
     const card = document.getElementById('resultCard');
     document.getElementById('routePath').innerText = data.path.join(' → ');
-    document.getElementById('totalTime').innerText = data.total_time;
+
+    const total_time = data.total_time;
+    const hours = Math.floor(total_time / 60);
+    const minutes = total_time % 60;
+
+    document.getElementById('totalHours').innerText = hours;
+    document.getElementById('totalMins').innerText = minutes;
+
     card.style.display = 'block';
 }
 
