@@ -1,16 +1,27 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
+import math
+import heapq
 
 app = Flask(__name__)
 
-# Read JSON data
 flight_graph = {}
 airport_names = {}  
+coords_dict = {}
 
-# Load data + name 
+# Calculate distance between two lat/lng points in km
+def haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371.0 
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    return round(R * c, 2)
+
 def load_flight_data():
-    global flight_graph, airport_names
+    global flight_graph, airport_names, coords_dict
     data_path = os.path.join(os.path.dirname(__file__), "data", "airline_routes.json")
     if not os.path.exists(data_path):
         print(f"JSON file not found: {data_path}")
@@ -21,96 +32,113 @@ def load_flight_data():
             flight_data = json.load(f)  
         
         adjacency_list = {}
+        
         for iata_code, airport in flight_data.items():
             iata = iata_code.strip()
-            if not iata:
-                continue
+            if not iata: continue
             
-            if iata not in airport_names:
-                display_name = airport.get("display_name", "")
-                name = airport.get("name", "")
-                if display_name:
-                    airport_names[iata] = display_name
-                elif name:
-                    airport_names[iata] = f"{name} ({iata})"
-                else:
-                    airport_names[iata] = f"Airport ({iata})"
+            name = airport.get("name", "").strip()
+            city = airport.get("city", "").strip()
+            country = airport.get("country", "").strip()
             
+            if not city:
+                city = name.split(" Airport")[0].split(" International")[0].strip()
+            
+            hub_patch = {
+                "LHR": "London", "LGW": "London", "STN": "London", "LTN": "London", "LCY": "London",
+                "JFK": "New York", "LGA": "New York", "EWR": "New York",
+                "HND": "Tokyo", "NRT": "Tokyo", 
+                "CDG": "Paris", "ORY": "Paris",
+                "DXB": "Dubai", "SIN": "Singapore", "LAX": "Los Angeles", 
+                "SFO": "San Francisco", "ORD": "Chicago", "ATL": "Atlanta"
+            }
+            if iata in hub_patch:
+                city = hub_patch[iata]
+            
+            display_country = f", {country}" if country and country.lower() != city.lower() else ""
+            
+            display_name = name
+            if city and display_name.lower().startswith(city.lower()):
+                temp_name = display_name[len(city):].strip(' -,')
+                invalid_leftovers = ["airport", "intl", "international", "international airport", "regional"]
+                if temp_name and temp_name.lower() not in invalid_leftovers:
+                    display_name = temp_name
+            
+            if not display_name:
+                display_name = "Airport"
+
+            airport_names[iata] = f"{city} ({iata}) - {display_name}{display_country}"
+
             try:
                 lat = float(airport.get("latitude", 0.0))
                 lng = float(airport.get("longitude", 0.0))
             except:
                 lat, lng = 0.0, 0.0
+            coords_dict[iata] = (lat, lng)
+
+        for iata_code, airport in flight_data.items():
+            iata = iata_code.strip()
+            if not iata: continue
             
+            lat, lng = coords_dict[iata]
             routes = airport.get("routes", [])
             route_details = []
+            
             for route_obj in routes:
                 route_iata = route_obj.get("iata", "").strip()
                 duration = route_obj.get("min", 10)
-                if not route_iata:
-                    continue
-                target_airport = flight_data.get(route_iata, {})
-                try:
-                    target_lat = float(target_airport.get("latitude", lat))
-                    target_lng = float(target_airport.get("longitude", lng))
-                except:
-                    target_lat, target_lng = lat, lng
-                route_details.append((route_iata, duration, target_lat, target_lng))
+                if not route_iata or route_iata not in coords_dict: continue
+                
+                target_lat, target_lng = coords_dict[route_iata]
+                
+                distance = haversine_distance(lat, lng, target_lat, target_lng)
+                price = round(50 + (distance * 0.12) + (duration * 0.05), 2) 
+                
+                route_details.append((route_iata, duration, distance, price))
             
             if route_details:
                 adjacency_list[iata] = route_details
         
         flight_graph = adjacency_list
-        print(f"Loaded {len(flight_graph)} airports, {len(airport_names)} names cached")
+        print(f"Loaded {len(flight_graph)} airports with cleaned formatting.")
     except Exception as e:
         print(f"Load JSON failed: {str(e)}")
 
 load_flight_data()
 
-# Linear Search + Merge Sort
-def find_all_routes(start_iata, end_iata):
-    all_routes = []
-    queue = [(start_iata, [start_iata], 0, {start_iata: (flight_graph[start_iata][0][2], flight_graph[start_iata][0][3])} if start_iata in flight_graph else (0,0))]
+# DIJKSTRA'S ALGORITHM
+def find_optimal_route(start_iata, end_iata, criteria='time'):
+    queue = [(0, start_iata, [start_iata], 0, 0, 0)]
     visited = set()
+    
     while queue:
-        current, path, total_time, coords = queue.pop(0)
+        cost, current, path, tot_time, tot_dist, tot_price = heapq.heappop(queue)
+        
         if current in visited:
             continue
         visited.add(current)
+        
+        if current == end_iata:
+            return path, tot_time, tot_dist, tot_price
+            
         if current in flight_graph:
-            for neighbor, dur, lat, lng in flight_graph[current]:
-                new_path = path + [neighbor]
-                new_time = total_time + dur
-                new_coords = coords.copy()
-                new_coords[neighbor] = (lat, lng)
-                if neighbor == end_iata:
-                    all_routes.append((new_path, new_time, new_coords))
-                elif neighbor not in path:
-                    queue.append((neighbor, new_path, new_time, new_coords))
-    return all_routes
-
-def merge_sort(routes):
-    if len(routes) <= 1:
-        return routes
-    mid = len(routes) // 2
-    left = merge_sort(routes[:mid])
-    right = merge_sort(routes[mid:])
-    return merge(left, right)
-
-def merge(left, right):
-    result = []
-    i = j = 0
-    while i < len(left) and j < len(right):
-        if left[i][1] <= right[j][1]:
-            result.append(left[i])
-            i += 1
-        else:
-            result.append(right[j])
-            j += 1
-    result.extend(left[i:])
-    result.extend(right[j:])
-    return result
-
+            for neighbor, dur, dist, price in flight_graph[current]:
+                if neighbor not in visited:
+                    if criteria == 'time': weight = dur
+                    elif criteria == 'distance': weight = dist
+                    elif criteria == 'price': weight = price
+                    elif criteria == 'connections': weight = 1 
+                    else: weight = dur
+                    
+                    heapq.heappush(queue, (
+                        cost + weight, 
+                        neighbor, 
+                        path + [neighbor], 
+                        tot_time + dur, 
+                        round(tot_dist + dist, 2), 
+                        round(tot_price + price, 2)
+                    ))
+    return None, 0, 0, 0
 
 @app.route('/')
 def index():
@@ -127,22 +155,27 @@ def get_shortest_route():
     if start == end:
         return jsonify({"code": 0, "msg": "Departure and arrival cannot be the same!"})
     
-    all_routes = find_all_routes(start, end)
-    if not all_routes:
-        return jsonify({"code": 0, "msg": "No routes found!"})
+    # Calculate all 4 criteria at once
+    routes_data = {}
+    criteria_list = ['time', 'distance', 'price', 'connections']
     
-    sorted_routes = merge_sort(all_routes)
-    shortest = sorted_routes[0]
+    for crit in criteria_list:
+        path, tot_time, tot_dist, tot_price = find_optimal_route(start, end, crit)
+        if path:
+            routes_data[crit] = {
+                "path": path,  
+                "path_names": [airport_names[iata] for iata in path], # NEW: Full names for the map
+                "total_time": tot_time, 
+                "total_distance": tot_dist,
+                "total_price": tot_price,
+                "coords": {iata: coords_dict[iata] for iata in path}
+            }
+            
+    if not routes_data:
+        return jsonify({"code": 0, "msg": "No route found between these airports!"})
     
-    result = {
-        "code": 1,
-        "path": shortest[0],  
-        "total_time": shortest[1], 
-        "coords": shortest[2]
-    }
-    return jsonify(result)
+    return jsonify({"code": 1, "routes": routes_data})
 
-# Dropdown menu to show user airport choices
 @app.route('/api/airport_options')
 def get_airport_options():
     try:
@@ -152,10 +185,8 @@ def get_airport_options():
             if iata in flight_graph 
         ]
         options.sort(key=lambda x: x["text"])
-        print(f"Return {len(options)} airport options")
         return jsonify({"code": 1, "options": options})
     except Exception as e:
-        print(f"Airport options failed: {str(e)}")
         return jsonify({"code": 0, "msg": "Failed to load airports"})
 
 if __name__ == '__main__':

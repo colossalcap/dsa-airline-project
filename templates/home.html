@@ -3,34 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Path Finder</title>
+    <title>Flight Path Finder - SIA Style</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="../static/map/leaflet.css">
     <script src="../static/map/leaflet.js"></script>
 </head>
 <body>
     <div class="header">
-        <h1>Flight Path Finder</h1>
+        <h1>✈ Flight Path Finder</h1>
     </div>
 
     <div class="container">
-
         <div class="input-card">
-            <div class="input-item">
-                <label for="startAirport">Departure Airport</label>
-                <select id="startAirport"></select>
+            <h2>Search Flights</h2>
+            
+            <div class="input-row">
+                <div class="input-item">
+                    <label for="startAirport">From</label>
+                    <input type="text" id="startAirport" list="airportList" autocomplete="off" placeholder="City or Airport (e.g. SIN)">
+                </div>
+                <div class="input-item">
+                    <label for="endAirport">To</label>
+                    <input type="text" id="endAirport" list="airportList" autocomplete="off" placeholder="City or Airport (e.g. LHR)">
+                </div>
             </div>
-            <div class="input-item">
-                <label for="endAirport">Arrival Airport</label>
-                <select id="endAirport"></select>
-            </div>
-            <button onclick="queryShortestRoute()">Find Path</button>
+            
+            <datalist id="airportList"></datalist>
+
+            <button class="search-btn" onclick="queryShortestRoute()">Search Flights</button>
             <div class="error-msg" id="errorMsg"></div>
 
-            <div class="result" id="resultCard">
-                <h4>Shortest Path Result</h4>
-                <p>Route: <span id="routePath"></span></p>
-                <p>Total Duration: <span id="totalHours"></span> h <span id="totalMins"></span> mins</p>
+            <div class="result" id="resultCard" style="display: none;">
+                <div class="route-tabs" id="routeTabs"></div>
+
+                <div id="bestOverallBadge" class="best-badge" style="display: none;">
+                    ⭐ This is the best overall route across all categories!
+                </div>
+
+                <h4 id="routeTitle">Optimal Flight Itinerary</h4>
+                <p><strong>Route:</strong> <span id="routePath"></span></p>
+                <p><strong>Estimated Duration:</strong> <span id="totalHours"></span> h <span id="totalMins"></span> mins</p>
+                <p><strong>Estimated Distance:</strong> <span id="totalDistance"></span></p>
+                <p><strong>Estimated Price:</strong> <span id="totalPrice"></span></p>
             </div>
         </div>
 
