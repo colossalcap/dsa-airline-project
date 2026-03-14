@@ -24,6 +24,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    a = max(0.0, min(1.0, a))
     c = 2 * math.asin(math.sqrt(a))
     return round(R * c, 2)
 
@@ -187,7 +188,7 @@ sorted_iata_codes = []
 def build_sorted_iata_list():
     """Build a sorted list of all valid IATA codes using Quick Sort."""
     global sorted_iata_codes
-    codes = [code for code in flight_graph.keys()]
+    codes = [code for code in airport_names.keys()]
     quick_sort(codes, key_func=lambda x: x)
     sorted_iata_codes = codes
 
@@ -358,15 +359,15 @@ def index():
 
 @app.route('/api/get_shortest_route', methods=['POST'])
 def get_shortest_route():
-    data = request.get_json()
-    start = data.get('start', '').upper()
-    end = data.get('end', '').upper()
+    data = request.get_json() or {}
+    start = (data.get('start') or '').upper()
+    end = (data.get('end') or '').upper()
 
     print("\n" + "="*60)
     print(f"[API] /api/get_shortest_route -- {start} -> {end}")
     print("="*60)
     
-    if start not in flight_graph or end not in flight_graph:
+    if start not in airport_names or end not in airport_names:
         print(f"[API] ERROR: Airport IATA not found in graph")
         return jsonify({"code": 0, "msg": "Airport IATA not exists!"})
     if start == end:
@@ -410,14 +411,13 @@ def get_airport_options():
     try:
         options = []
         for iata, name in airport_names.items():
-            if iata in flight_graph:
-                lat, lng = coords_dict.get(iata, (0, 0))
-                options.append({
-                    "value": iata, 
-                    "text": name,
-                    "lat": lat,
-                    "lng": lng
-                })
+            lat, lng = coords_dict.get(iata, (0, 0))
+            options.append({
+                "value": iata, 
+                "text": name,
+                "lat": lat,
+                "lng": lng
+            })
 
         print(f"  Built {len(options)} airport options, now sorting...")
         # FEATURE 3: Using our custom Quick Sort instead of Python's built-in .sort()
@@ -439,8 +439,8 @@ def validate_iata():
     """Validate if an IATA code exists using Binary Search.
     Syllabus Topics: Divide & Conquer, Searching (Binary Search), Arrays.
     """
-    data = request.get_json()
-    iata = data.get('iata', '').upper().strip()
+    data = request.get_json() or {}
+    iata = (data.get('iata') or '').upper().strip()
     print("\n" + "="*60)
     print(f"[API] /api/validate_iata -- Validating IATA code: '{iata}'")
     print("="*60)
@@ -470,9 +470,9 @@ def get_alternative_routes():
     """API endpoint for Feature 1: Alternative Route Finder.
     Uses DFS with Backtracking to find all routes up to max_connections.
     """
-    data = request.get_json()
-    start = data.get('start', '').upper()
-    end = data.get('end', '').upper()
+    data = request.get_json() or {}
+    start = (data.get('start') or '').upper()
+    end = (data.get('end') or '').upper()
     max_conn = data.get('max_connections', 3)
 
     # Validate max_connections range
@@ -486,7 +486,7 @@ def get_alternative_routes():
     print(f"[API] /api/alternative_routes -- {start} -> {end} (max {max_conn} connections)")
     print("="*60)
 
-    if start not in flight_graph or end not in flight_graph:
+    if start not in airport_names or end not in airport_names:
         print(f"  ERROR: Airport IATA not found in graph")
         return jsonify({"code": 0, "msg": "Airport IATA not found!"})
     if start == end:
@@ -517,8 +517,8 @@ def get_reachability():
     """API endpoint for Feature 2: Where Can I Go? Reachability Map.
     Uses BFS to find all reachable airports within max_stops.
     """
-    data = request.get_json()
-    start = data.get('start', '').upper()
+    data = request.get_json() or {}
+    start = (data.get('start') or '').upper()
     max_stops = data.get('max_stops', 2)
 
     try:
@@ -531,7 +531,7 @@ def get_reachability():
     print(f"[API] /api/reachability -- From {start}, max {max_stops} stops")
     print("="*60)
 
-    if start not in flight_graph:
+    if start not in airport_names:
         print(f"  ERROR: Airport IATA not found in graph")
         return jsonify({"code": 0, "msg": "Airport IATA not found!"})
 
