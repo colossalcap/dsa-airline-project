@@ -1,16 +1,23 @@
 let map, markers = [], routeLine = null;
 let currentRoutesData = {}; 
+let globalAirports = []; 
+let tempStartMarker = null; 
+let tempEndMarker = null;   
 
 window.onload = async function() {
     initMap();
     await loadAirportOptions();
+    setupInputListeners();
 };
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
+    
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    map.on('click', handleMapClick);
 }
 
 function clearMap() {
@@ -18,6 +25,19 @@ function clearMap() {
     markers = [];
     if (routeLine) map.removeLayer(routeLine);
     routeLine = null;
+    
+    if (tempStartMarker) map.removeLayer(tempStartMarker);
+    if (tempEndMarker) map.removeLayer(tempEndMarker);
+}
+
+function resetRouteDisplay() {
+    document.getElementById('resultCard').style.display = 'none';
+    if (routeLine) {
+        map.removeLayer(routeLine);
+        routeLine = null;
+    }
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
 }
 
 function showError(msg) {
@@ -37,6 +57,7 @@ async function loadAirportOptions() {
         const data = await res.json();
         
         if (data.code === 1 && Array.isArray(data.options)) {
+            globalAirports = data.options; 
             const dataList = document.getElementById('airportList');
             dataList.innerHTML = ''; 
             
@@ -53,9 +74,128 @@ async function loadAirportOptions() {
     }
 }
 
+function setupInputListeners() {
+    document.getElementById('startAirport').addEventListener('input', (e) => handleInputChange(e, 'startAirport'));
+    document.getElementById('endAirport').addEventListener('input', (e) => handleInputChange(e, 'endAirport'));
+}
+
+function handleInputChange(e, inputId) {
+    resetRouteDisplay(); // Hide old routes and results when user starts typing a new airport
+    hideError();
+
+    const val = e.target.value;
+    const matchedAirport = globalAirports.find(ap => ap.text === val);
+    
+    if (matchedAirport) {
+        const lat = matchedAirport.lat;
+        const lng = matchedAirport.lng;
+        
+        if (inputId === 'startAirport') {
+            if (tempStartMarker) map.removeLayer(tempStartMarker);
+            tempStartMarker = L.marker([lat, lng], {
+                icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
+            }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
+        } else {
+            if (tempEndMarker) map.removeLayer(tempEndMarker);
+            tempEndMarker = L.marker([lat, lng], {
+                icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
+            }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
+        }
+        map.flyTo([lat, lng], 5, { duration: 1.5 });
+    } else {
+        if (inputId === 'startAirport' && tempStartMarker) {
+            map.removeLayer(tempStartMarker);
+            tempStartMarker = null;
+        } else if (inputId === 'endAirport' && tempEndMarker) {
+            map.removeLayer(tempEndMarker);
+            tempEndMarker = null;
+        }
+    }
+}
+
+// --- SMART RADAR MAP CLICK LOGIC ---
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; 
+    const dLat = (lat2 - lat1) * (Math.PI/180);
+    const dLon = (lon2 - lon1) * (Math.PI/180); 
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return R * c; 
+}
+
+function handleMapClick(e) {
+    const clickLat = e.latlng.lat;
+    const clickLng = e.latlng.lng;
+    
+    const nearbyAirports = globalAirports.filter(airport => {
+        const dist = getDistanceFromLatLonInKm(clickLat, clickLng, airport.lat, airport.lng);
+        return dist <= 150; 
+    });
+
+    if (nearbyAirports.length === 0) {
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent("<div style='text-align:center; color:#333;'><b>No airports found within 150km.</b><br>Try clicking closer to a city!</div>")
+            .openOn(map);
+        return;
+    }
+
+    let optionsHtml = nearbyAirports.map(ap => `<option value="${ap.text}" data-lat="${ap.lat}" data-lng="${ap.lng}">${ap.text}</option>`).join('');
+    
+    let popupContent = `
+        <div style="text-align:center; min-width: 200px; color:#333;">
+            <b style="color:#001A4D;">${nearbyAirports.length} Airport(s) Nearby</b><br>
+            <select id="mapPopupSelect" style="width:100%; margin: 10px 0; padding: 5px; border-radius:3px; color:#333;">
+                ${optionsHtml}
+            </select>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="setMapSelection('startAirport')" style="background:#001A4D; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; flex:1;">Set From</button>
+                <button onclick="setMapSelection('endAirport')" style="background:#FFB81C; color:#001A4D; font-weight:bold; border:none; padding:8px; border-radius:4px; cursor:pointer; flex:1;">Set To</button>
+            </div>
+        </div>
+    `;
+
+    L.popup()
+        .setLatLng(e.latlng)
+        .setContent(popupContent)
+        .openOn(map);
+}
+
+window.setMapSelection = function(inputId) {
+    resetRouteDisplay();
+    hideError();
+
+    const selectEl = document.getElementById('mapPopupSelect');
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const selectedText = selectedOption.value;
+    const lat = parseFloat(selectedOption.getAttribute('data-lat'));
+    const lng = parseFloat(selectedOption.getAttribute('data-lng'));
+
+    document.getElementById(inputId).value = selectedText;
+    map.closePopup();
+    
+    if (inputId === 'startAirport') {
+        if (tempStartMarker) map.removeLayer(tempStartMarker);
+        tempStartMarker = L.marker([lat, lng], {
+            icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
+        }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
+    } else {
+        if (tempEndMarker) map.removeLayer(tempEndMarker);
+        tempEndMarker = L.marker([lat, lng], {
+            icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
+        }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
+    }
+
+    map.flyTo([lat, lng], 5, { duration: 1.5 });
+
+    const inputEl = document.getElementById(inputId);
+    inputEl.style.backgroundColor = '#e8f5e9';
+    setTimeout(() => inputEl.style.backgroundColor = '', 500);
+}
+
+// --- ROUTE QUERY & RENDERING ---
 async function queryShortestRoute() {
     hideError();
-    clearMap();
     
     const startRaw = document.getElementById('startAirport').value;
     const endRaw = document.getElementById('endAirport').value;
@@ -85,6 +225,9 @@ async function queryShortestRoute() {
             showError(data.msg);
             return;
         }
+
+        // Clear temporary pins before drawing the actual real route
+        clearMap();
 
         currentRoutesData = data.routes;
         generateDynamicTabs();
@@ -125,36 +268,27 @@ function generateDynamicTabs() {
     const pathKeys = Object.keys(uniquePaths);
 
     if (pathKeys.length === 1) {
-        // All 4 criteria result in the exact same route
         document.getElementById('bestOverallBadge').style.display = 'block';
         tabsContainer.style.display = 'none';
-
         const singleCrit = uniquePaths[pathKeys[0]].criterias[0];
         currentRoutesData[singleCrit].groupedTitle = 'Best Overall Itinerary';
-
-        // Hidden button so the switchTab logic works seamlessly
         const btn = document.createElement('button');
         btn.className = 'tab-btn';
         btn.dataset.target = singleCrit;
         tabsContainer.appendChild(btn);
-
     } else {
         document.getElementById('bestOverallBadge').style.display = 'none';
         tabsContainer.style.display = 'flex';
-
         for (const pathStr in uniquePaths) {
             const group = uniquePaths[pathStr];
-            // E.g., This creates a string like "Fastest & Cheapest"
             const tabLabels = group.criterias.map(c => criteriaNames[c]).join(' & ');
             const primaryCrit = group.criterias[0];
-
             const btn = document.createElement('button');
             btn.className = 'tab-btn';
             btn.onclick = () => switchTab(primaryCrit);
             btn.innerText = tabLabels;
             btn.dataset.target = primaryCrit;
             tabsContainer.appendChild(btn);
-
             group.criterias.forEach(c => {
                 currentRoutesData[c].groupedTitle = tabLabels + ' Itinerary';
             });
@@ -177,12 +311,16 @@ window.switchTab = function(criteria) {
     document.getElementById('totalDistance').innerText = routeData.total_distance.toLocaleString() + ' km';
     document.getElementById('totalPrice').innerText = '$' + routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-    clearMap();
+    // Remove old route layer to draw the new tab's route
+    if (routeLine) map.removeLayer(routeLine);
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    
     renderMap(routeData);
 }
 
 function renderMap(data) {
-    const { path, path_names, coords } = data; // Pulling in the full path_names from Python
+    const { path, path_names, coords } = data; 
     const latlngs = [];
     
     path.forEach((iata, index) => {
@@ -190,33 +328,41 @@ function renderMap(data) {
         const [lat, lng] = coords[iata];
         latlngs.push([lat, lng]);
         
-        // Determine color and wording based on position in route
-        let pointType = 'Layover (Arrival & Departure)';
-        let color = '#165DFF'; // Blue for middle stops
+        let markerHtml = '';
+        let popupText = '';
         
         if (index === 0) {
-            pointType = 'Departure';
-            color = '#F53F3F'; // Red for start
+            markerHtml = `<div class="premium-marker marker-start" style="width:35px; height:35px;">🛫</div>`;
+            popupText = `<b>${fullName}</b><br>Departure Airport`;
         } else if (index === path.length - 1) {
-            pointType = 'Arrival';
-            color = '#00B42A'; // Green for end
+            markerHtml = `<div class="premium-marker marker-end" style="width:35px; height:35px;">🛬</div>`;
+            popupText = `<b>${fullName}</b><br>Arrival Airport`;
+        } else {
+            markerHtml = `<div class="premium-marker marker-layover" style="width:25px; height:25px;">🔵</div>`;
+            popupText = `<b>${fullName}</b><br>Layover`;
         }
 
         const marker = L.marker([lat, lng], {
-            icon: L.divIcon({
-                html: `<div style="background:${color}; color:white; padding:2px 6px; border-radius:3px; font-size:12px; white-space:nowrap;">${iata}</div>`,
-                iconSize: null
-            })
-        }).addTo(map).bindPopup(`<b>${fullName}</b><br>${pointType}`);
+            icon: L.divIcon({ html: markerHtml, className: '' })
+        }).addTo(map).bindPopup(popupText);
         
         markers.push(marker);
     });
 
-    routeLine = L.polyline(latlngs, {
-        color: '#165DFF',
-        weight: 3,
-        opacity: 0.7
-    }).addTo(map);
+    if (typeof L.polyline.antPath === 'function') {
+        routeLine = L.polyline.antPath(latlngs, {
+            "delay": 400,
+            "dashArray": [15, 30],
+            "weight": 5,
+            "color": "#00E5FF", 
+            "pulseColor": "#001A4D", // Changed pulse color slightly to match light map
+            "paused": false,
+            "reverse": false,
+            "hardwareAccelerated": true
+        }).addTo(map);
+    } else {
+        routeLine = L.polyline(latlngs, { color: '#00E5FF', weight: 4 }).addTo(map);
+    }
     
     routeLine.bindPopup(`<b>Optimal Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
     map.fitBounds(latlngs, { padding: [50, 50] });

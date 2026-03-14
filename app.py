@@ -179,11 +179,17 @@ def get_shortest_route():
 @app.route('/api/airport_options')
 def get_airport_options():
     try:
-        options = [
-            {"value": iata, "text": name} 
-            for iata, name in airport_names.items()
-            if iata in flight_graph 
-        ]
+        options = []
+        for iata, name in airport_names.items():
+            if iata in flight_graph:
+                lat, lng = coords_dict.get(iata, (0, 0))
+                options.append({
+                    "value": iata, 
+                    "text": name,
+                    "lat": lat,
+                    "lng": lng
+                })
+                
         options.sort(key=lambda x: x["text"])
         return jsonify({"code": 1, "options": options})
     except Exception as e:
