@@ -38,6 +38,10 @@
             <datalist id="airportList"></datalist>
 
             <button class="search-btn" onclick="queryShortestRoute()">Search Flights</button>
+            <div class="loading-bar" id="optimal-loading" style="display: none;">
+                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+                <span class="loading-text">Running Dijkstra's Algorithm...</span>
+            </div>
             <div class="error-msg" id="errorMsg"></div>
 
             <div class="result" id="resultCard" style="display: none;">
@@ -83,6 +87,10 @@
             </div>
 
             <button class="search-btn" onclick="queryAlternativeRoutes()">Find All Routes</button>
+            <div class="loading-bar" id="alt-loading" style="display: none;">
+                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+                <span class="loading-text">Running DFS with Backtracking...</span>
+            </div>
             <div class="error-msg" id="altErrorMsg"></div>
 
             <div id="altResultArea" style="display: none;">
@@ -114,6 +122,10 @@
             </div>
 
             <button class="search-btn" onclick="queryReachability()">Explore Reachability</button>
+            <div class="loading-bar" id="bfs-loading" style="display: none;">
+                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+                <span class="loading-text">Running BFS (Breadth-First Search)...</span>
+            </div>
             <div class="error-msg" id="bfsErrorMsg"></div>
 
             <div id="bfsResultArea" style="display: none;">

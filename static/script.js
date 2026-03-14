@@ -6,6 +6,20 @@ let tempEndMarker = null;
 let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
 
+// ===== LOADING BAR UTILITY =====
+function showLoading(panelId, message) {
+    const bar = document.getElementById(panelId + '-loading');
+    if (bar) {
+        bar.querySelector('.loading-text').textContent = message;
+        bar.style.display = 'flex';
+    }
+}
+
+function hideLoading(panelId) {
+    const bar = document.getElementById(panelId + '-loading');
+    if (bar) bar.style.display = 'none';
+}
+
 window.onload = async function() {
     initMap();
     await loadAirportOptions();
@@ -241,6 +255,8 @@ async function queryShortestRoute() {
     const start = extractIATA(startRaw);
     const end = extractIATA(endRaw);
 
+    showLoading('optimal', `Running Dijkstra's Algorithm: ${start} → ${end} ...`);
+
     try {
         const res = await fetch('/api/get_shortest_route', {
             method: 'POST',
@@ -248,6 +264,8 @@ async function queryShortestRoute() {
             body: JSON.stringify({ start, end })
         });
         const data = await res.json();
+
+        hideLoading('optimal');
 
         if (data.code === 0) {
             showError(data.msg);
@@ -264,6 +282,7 @@ async function queryShortestRoute() {
         document.getElementById('resultCard').style.display = 'block';
 
     } catch (err) {
+        hideLoading('optimal');
         showError('Network error. Check Flask server!');
         console.error(err);
     }
@@ -428,6 +447,9 @@ async function queryAlternativeRoutes() {
     const start = extractIATA(startRaw);
     const end = extractIATA(endRaw);
 
+    showLoading('alt', `Running DFS with Backtracking: ${start} → ${end} (max ${maxConn} flights) ...`);
+    document.getElementById('altResultArea').style.display = 'none';
+
     try {
         const res = await fetch('/api/alternative_routes', {
             method: 'POST',
@@ -435,6 +457,8 @@ async function queryAlternativeRoutes() {
             body: JSON.stringify({ start, end, max_connections: parseInt(maxConn) })
         });
         const data = await res.json();
+
+        hideLoading('alt');
 
         if (data.code === 0) {
             showAltError(data.msg);
@@ -454,6 +478,7 @@ async function queryAlternativeRoutes() {
         }
 
     } catch (err) {
+        hideLoading('alt');
         showAltError('Network error. Check Flask server!');
         console.error(err);
     }
@@ -553,6 +578,9 @@ async function queryReachability() {
 
     const start = extractIATA(startRaw);
 
+    showLoading('bfs', `Running BFS from ${start} (max ${maxStops} flights) ...`);
+    document.getElementById('bfsResultArea').style.display = 'none';
+
     try {
         const res = await fetch('/api/reachability', {
             method: 'POST',
@@ -560,6 +588,8 @@ async function queryReachability() {
             body: JSON.stringify({ start, max_stops: parseInt(maxStops) })
         });
         const data = await res.json();
+
+        hideLoading('bfs');
 
         if (data.code === 0) {
             showBfsError(data.msg);
@@ -581,6 +611,7 @@ async function queryReachability() {
         renderBfsMap(data);
 
     } catch (err) {
+        hideLoading('bfs');
         showBfsError('Network error. Check Flask server!');
         console.error(err);
     }
