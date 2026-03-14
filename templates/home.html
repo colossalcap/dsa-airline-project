@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flight Path Finder</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=4">
     <link rel="stylesheet" href="../static/map/leaflet.css">
     <script src="../static/map/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.3.0/dist/leaflet-ant-path.min.js"></script>
@@ -20,7 +20,6 @@
     </div>
 
     <div class="container">
-        <!-- ===== PANEL 1: OPTIMAL ROUTE (Existing) ===== -->
         <div class="input-card panel-card" id="panel-optimal">
             <h2>Search Flights</h2>
             
@@ -37,7 +36,13 @@
             
             <datalist id="airportList"></datalist>
 
-            <button class="search-btn" onclick="queryShortestRoute()">Search Flights</button>
+            <div class="action-row">
+                <button class="search-btn" onclick="queryShortestRoute()" style="flex: 1;">Search Flights</button>
+                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                    <span class="trash-icon">🗑️</span> Clear
+                </button>
+            </div>
+            
             <div class="loading-bar" id="optimal-loading" style="display: none;">
                 <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
                 <span class="loading-text">Running Dijkstra's Algorithm...</span>
@@ -59,7 +64,6 @@
             </div>
         </div>
 
-        <!-- ===== PANEL 2: ALTERNATIVE ROUTES (DFS & Backtracking) ===== -->
         <div class="input-card panel-card" id="panel-alternatives" style="display: none;">
             <h2>🔀 Alternative Routes</h2>
             <p class="feature-desc">Find <strong>all possible routes</strong> between two airports using <em>DFS & Backtracking</em>.</p>
@@ -86,7 +90,13 @@
                 </select>
             </div>
 
-            <button class="search-btn" onclick="queryAlternativeRoutes()">Find All Routes</button>
+            <div class="action-row">
+                <button class="search-btn" onclick="queryAlternativeRoutes()" style="flex: 1;">Find All Routes</button>
+                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                    <span class="trash-icon">🗑️</span> Clear
+                </button>
+            </div>
+            
             <div class="loading-bar" id="alt-loading" style="display: none;">
                 <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
                 <span class="loading-text">Running DFS with Backtracking...</span>
@@ -95,11 +105,20 @@
 
             <div id="altResultArea" style="display: none;">
                 <div class="alt-summary" id="altSummary"></div>
+                
+                <div class="alt-sort-controls" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <label for="altSortSelect" style="margin-bottom: 0;">Sort By:</label>
+                    <select id="altSortSelect" onchange="sortAltRoutes()" style="width: auto; padding: 6px; font-size: 13px; cursor: pointer;">
+                        <option value="cheapest">💰 Cheapest</option>
+                        <option value="fastest">⏱️ Fastest</option>
+                        <option value="transits">🔀 Least Transits</option>
+                    </select>
+                </div>
+                
                 <div class="alt-routes-list" id="altRoutesList"></div>
             </div>
         </div>
 
-        <!-- ===== PANEL 3: REACHABILITY MAP (BFS) ===== -->
         <div class="input-card panel-card" id="panel-reachability" style="display: none;">
             <h2>🌍 Where Can I Go?</h2>
             <p class="feature-desc">Discover all reachable airports from your starting point using <em>BFS (Breadth-First Search)</em>.</p>
@@ -121,7 +140,13 @@
                 </select>
             </div>
 
-            <button class="search-btn" onclick="queryReachability()">Explore Reachability</button>
+            <div class="action-row">
+                <button class="search-btn" onclick="queryReachability()" style="flex: 1;">Explore Reachability</button>
+                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                    <span class="trash-icon">🗑️</span> Clear
+                </button>
+            </div>
+            
             <div class="loading-bar" id="bfs-loading" style="display: none;">
                 <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
                 <span class="loading-text">Running BFS (Breadth-First Search)...</span>
@@ -139,6 +164,6 @@
         </div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <script src="/static/script.js?v=4"></script>
 </body>
 </html>

@@ -5,6 +5,43 @@ let tempStartMarker = null;
 let tempEndMarker = null;
 let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
+let activePanel = 'optimal'; // Tracks the currently active tab
+
+// ===== FADE OUT ANIMATION UTILITY (FIXED & BULLETPROOF) =====
+function fadeOutAndRemove(layer) {
+    if (!layer) return;
+
+    try {
+        // Safe access for vector layers (lines, circles)
+        if (typeof layer.getElement === 'function') {
+            const el = layer.getElement();
+            if (el && el.classList) el.classList.add('fade-out-layer');
+        }
+        
+        // Safe access for standard HTML markers
+        if (layer._icon && layer._icon.classList) layer._icon.classList.add('fade-out-layer');
+        if (layer._shadow && layer._shadow.classList) layer._shadow.classList.add('fade-out-layer');
+        
+        // Safe access for grouped layers like AntPath
+        if (typeof layer.eachLayer === 'function') {
+            layer.eachLayer(subLayer => {
+                if (typeof subLayer.getElement === 'function') {
+                    const subEl = subLayer.getElement();
+                    if (subEl && subEl.classList) subEl.classList.add('fade-out-layer');
+                }
+            });
+        }
+    } catch (e) {
+        console.warn("Could not apply fade animation, layer will be removed normally.", e);
+    }
+
+    // Wait 300ms for CSS to finish fading, then permanently remove it
+    setTimeout(() => {
+        if (map && map.hasLayer(layer)) {
+            map.removeLayer(layer);
+        }
+    }, 300);
+}
 
 // ===== LOADING BAR UTILITY =====
 function showLoading(panelId, message) {
@@ -37,28 +74,30 @@ function initMap() {
 }
 
 function clearMap() {
-    markers.forEach(marker => map.removeLayer(marker));
+    markers.forEach(fadeOutAndRemove);
     markers = [];
-    if (routeLine) map.removeLayer(routeLine);
+    
+    if (routeLine) fadeOutAndRemove(routeLine);
     routeLine = null;
     
-    if (tempStartMarker) map.removeLayer(tempStartMarker);
-    if (tempEndMarker) map.removeLayer(tempEndMarker);
+    if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
+    if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
+    tempStartMarker = null;
+    tempEndMarker = null;
 
-    // Clear BFS markers
-    bfsMarkers.forEach(m => map.removeLayer(m));
+    bfsMarkers.forEach(fadeOutAndRemove);
     bfsMarkers = [];
-    bfsCircles.forEach(c => map.removeLayer(c));
+    bfsCircles.forEach(fadeOutAndRemove);
     bfsCircles = [];
 }
 
 function resetRouteDisplay() {
     document.getElementById('resultCard').style.display = 'none';
     if (routeLine) {
-        map.removeLayer(routeLine);
+        fadeOutAndRemove(routeLine);
         routeLine = null;
     }
-    markers.forEach(marker => map.removeLayer(marker));
+    markers.forEach(fadeOutAndRemove);
     markers = [];
 }
 
@@ -73,8 +112,27 @@ function hideError() {
     document.getElementById('errorMsg').style.display = 'none';
 }
 
-// ===== PANEL SWITCHING =====
+// ===== PANEL SWITCHING & SYNCING =====
 window.switchPanel = function(panelId) {
+    let currentStart = "", currentEnd = "";
+    
+    if (activePanel === 'optimal') {
+        currentStart = document.getElementById('startAirport').value;
+        currentEnd = document.getElementById('endAirport').value;
+    } else if (activePanel === 'alternatives') {
+        currentStart = document.getElementById('altStart').value;
+        currentEnd = document.getElementById('altEnd').value;
+    } else if (activePanel === 'reachability') {
+        currentStart = document.getElementById('bfsStart').value;
+        currentEnd = document.getElementById('endAirport').value || document.getElementById('altEnd').value;
+    }
+
+    document.getElementById('startAirport').value = currentStart;
+    document.getElementById('altStart').value = currentStart;
+    document.getElementById('bfsStart').value = currentStart;
+    document.getElementById('endAirport').value = currentEnd;
+    document.getElementById('altEnd').value = currentEnd;
+
     document.querySelectorAll('.panel-card').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     
@@ -84,11 +142,32 @@ window.switchPanel = function(panelId) {
     const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
     if (btn) btn.classList.add('active');
 
-    // Clear map when switching panels
+    activePanel = panelId;
+
     clearMap();
     tempStartMarker = null;
     tempEndMarker = null;
 }
+
+// ===== CLEAR ALL INPUTS UTILITY =====
+window.clearAllInputs = function() {
+    document.getElementById('startAirport').value = '';
+    document.getElementById('endAirport').value = '';
+    document.getElementById('altStart').value = '';
+    document.getElementById('altEnd').value = '';
+    document.getElementById('bfsStart').value = '';
+    
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('altResultArea').style.display = 'none';
+    document.getElementById('bfsResultArea').style.display = 'none';
+    
+    hideError();
+    if(typeof hideAltError === 'function') hideAltError();
+    if(typeof hideBfsError === 'function') hideBfsError();
+    
+    clearMap();
+    resetRouteDisplay();
+};
 
 async function loadAirportOptions() {
     try {
@@ -130,12 +209,12 @@ function handleInputChange(e, inputId) {
         const lng = matchedAirport.lng;
         
         if (inputId === 'startAirport') {
-            if (tempStartMarker) map.removeLayer(tempStartMarker);
+            if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
             tempStartMarker = L.marker([lat, lng], {
                 icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
             }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
         } else {
-            if (tempEndMarker) map.removeLayer(tempEndMarker);
+            if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
             tempEndMarker = L.marker([lat, lng], {
                 icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
             }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
@@ -143,10 +222,10 @@ function handleInputChange(e, inputId) {
         map.flyTo([lat, lng], 5, { duration: 1.5 });
     } else {
         if (inputId === 'startAirport' && tempStartMarker) {
-            map.removeLayer(tempStartMarker);
+            fadeOutAndRemove(tempStartMarker);
             tempStartMarker = null;
         } else if (inputId === 'endAirport' && tempEndMarker) {
-            map.removeLayer(tempEndMarker);
+            fadeOutAndRemove(tempEndMarker);
             tempEndMarker = null;
         }
     }
@@ -210,36 +289,38 @@ window.setMapSelection = function(inputId) {
     const lat = parseFloat(selectedOption.getAttribute('data-lat'));
     const lng = parseFloat(selectedOption.getAttribute('data-lng'));
 
-    document.getElementById(inputId).value = selectedText;
+    if (activePanel === 'optimal') {
+        document.getElementById(inputId).value = selectedText;
+    } else if (activePanel === 'alternatives') {
+        document.getElementById(inputId === 'startAirport' ? 'altStart' : 'altEnd').value = selectedText;
+    } else if (activePanel === 'reachability' && inputId === 'startAirport') {
+        document.getElementById('bfsStart').value = selectedText;
+    }
+
     map.closePopup();
     
     if (inputId === 'startAirport') {
-        if (tempStartMarker) map.removeLayer(tempStartMarker);
+        if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
         tempStartMarker = L.marker([lat, lng], {
             icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
         }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
     } else {
-        if (tempEndMarker) map.removeLayer(tempEndMarker);
+        if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
         tempEndMarker = L.marker([lat, lng], {
             icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
         }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
     }
 
     map.flyTo([lat, lng], 5, { duration: 1.5 });
-
-    const inputEl = document.getElementById(inputId);
-    inputEl.style.backgroundColor = '#e8f5e9';
-    setTimeout(() => inputEl.style.backgroundColor = '', 500);
 }
 
-// ===== UTILITY: Extract IATA from display string =====
 function extractIATA(str) {
     const match = str.match(/\(([A-Z]{3})\)/);
     return match ? match[1] : str.substring(0, 3).toUpperCase();
 }
 
 // ===================================================================
-// PANEL 1: OPTIMAL ROUTE QUERY & RENDERING (Existing Dijkstra)
+// PANEL 1: OPTIMAL ROUTE QUERY
 // ===================================================================
 async function queryShortestRoute() {
     hideError();
@@ -283,7 +364,8 @@ async function queryShortestRoute() {
 
     } catch (err) {
         hideLoading('optimal');
-        showError('Network error. Check Flask server!');
+        // Show the actual error message now instead of generic text
+        showError(`Script Error: ${err.message}`);
         console.error(err);
     }
 }
@@ -357,8 +439,8 @@ window.switchTab = function(criteria) {
     document.getElementById('totalDistance').innerText = routeData.total_distance.toLocaleString() + ' km';
     document.getElementById('totalPrice').innerText = '$' + routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-    if (routeLine) map.removeLayer(routeLine);
-    markers.forEach(m => map.removeLayer(m));
+    if (routeLine) fadeOutAndRemove(routeLine);
+    markers.forEach(fadeOutAndRemove);
     markers = [];
     
     renderMap(routeData);
@@ -415,9 +497,8 @@ function renderMap(data) {
 
 
 // ===================================================================
-// PANEL 2: ALTERNATIVE ROUTES (DFS & Backtracking)
+// PANEL 2: ALTERNATIVE ROUTES
 // ===================================================================
-
 let altRoutesData = [];
 
 function showAltError(msg) {
@@ -470,19 +551,37 @@ async function queryAlternativeRoutes() {
         document.getElementById('altSummary').innerHTML = 
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
+        document.getElementById('altSortSelect').value = 'cheapest';
         renderAltRoutesList();
 
-        // Auto-select the first route
         if (altRoutesData.length > 0) {
             selectAltRoute(0);
         }
 
     } catch (err) {
         hideLoading('alt');
-        showAltError('Network error. Check Flask server!');
+        showAltError(`Script Error: ${err.message}`);
         console.error(err);
     }
 }
+
+window.sortAltRoutes = function() {
+    const sortCriteria = document.getElementById('altSortSelect').value;
+    
+    if (sortCriteria === 'cheapest') {
+        altRoutesData.sort((a, b) => a.total_price - b.total_price);
+    } else if (sortCriteria === 'fastest') {
+        altRoutesData.sort((a, b) => a.total_time - b.total_time);
+    } else if (sortCriteria === 'transits') {
+        altRoutesData.sort((a, b) => a.path.length - b.path.length);
+    }
+    
+    renderAltRoutesList();
+    
+    if (altRoutesData.length > 0) {
+        selectAltRoute(0);
+    }
+};
 
 function renderAltRoutesList() {
     const container = document.getElementById('altRoutesList');
@@ -512,21 +611,17 @@ function renderAltRoutesList() {
 }
 
 function selectAltRoute(index) {
-    // Highlight selected card
     document.querySelectorAll('.alt-route-card').forEach(c => c.classList.remove('selected'));
     const selectedCard = document.querySelector(`.alt-route-card[data-index="${index}"]`);
     if (selectedCard) selectedCard.classList.add('selected');
 
-    // Render on map
     const route = altRoutesData[index];
     if (!route) return;
 
-    // Clear existing route display
-    if (routeLine) map.removeLayer(routeLine);
-    markers.forEach(m => map.removeLayer(m));
+    if (routeLine) fadeOutAndRemove(routeLine);
+    markers.forEach(fadeOutAndRemove);
     markers = [];
 
-    // Build data object matching renderMap expectations
     const mapData = {
         path: route.path,
         path_names: route.path_names,
@@ -538,14 +633,12 @@ function selectAltRoute(index) {
     renderMap(mapData);
 }
 
-// Make globally accessible
 window.queryAlternativeRoutes = queryAlternativeRoutes;
 
 
 // ===================================================================
-// PANEL 3: REACHABILITY MAP (BFS)
+// PANEL 3: REACHABILITY MAP
 // ===================================================================
-
 function showBfsError(msg) {
     const el = document.getElementById('bfsErrorMsg');
     el.innerText = msg;
@@ -598,7 +691,6 @@ async function queryReachability() {
 
         document.getElementById('bfsResultArea').style.display = 'block';
 
-        // Count total reachable airports
         let totalCount = 0;
         for (const level in data.reachable) {
             totalCount += data.reachable[level].length;
@@ -612,7 +704,7 @@ async function queryReachability() {
 
     } catch (err) {
         hideLoading('bfs');
-        showBfsError('Network error. Check Flask server!');
+        showBfsError(`Script Error: ${err.message}`);
         console.error(err);
     }
 }
@@ -647,7 +739,6 @@ function renderBfsLevels(reachable) {
             chip.textContent = ap.iata;
             chip.title = ap.name;
             chip.onclick = () => {
-                // Fly to this airport on the map
                 const coords = ap.coords;
                 if (coords) {
                     map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
@@ -664,7 +755,6 @@ function renderBfsLevels(reachable) {
 function renderBfsMap(data) {
     const startCoords = data.start_coords;
     
-    // Add center marker
     const centerMarker = L.marker([startCoords[0], startCoords[1]], {
         icon: L.divIcon({ 
             html: `<div class="premium-marker marker-bfs-center" style="width:40px; height:40px; font-size:18px;">✈</div>`, 
@@ -675,7 +765,6 @@ function renderBfsMap(data) {
 
     const allLatLngs = [[startCoords[0], startCoords[1]]];
 
-    // Add markers for each level with color coding
     for (const level in data.reachable) {
         const color = BFS_COLORS[level] || '#999';
 
@@ -696,7 +785,6 @@ function renderBfsMap(data) {
         });
     }
 
-    // Fit map to show all reachable airports
     if (allLatLngs.length > 1) {
         map.fitBounds(allLatLngs, { padding: [40, 40] });
     } else {
@@ -704,5 +792,4 @@ function renderBfsMap(data) {
     }
 }
 
-// Make globally accessible
 window.queryReachability = queryReachability;
