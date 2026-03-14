@@ -2,7 +2,9 @@ let map, markers = [], routeLine = null;
 let currentRoutesData = {}; 
 let globalAirports = []; 
 let tempStartMarker = null; 
-let tempEndMarker = null;   
+let tempEndMarker = null;
+let bfsMarkers = [];  // For BFS reachability feature
+let bfsCircles = []; // For BFS radius circles
 
 window.onload = async function() {
     initMap();
@@ -28,6 +30,12 @@ function clearMap() {
     
     if (tempStartMarker) map.removeLayer(tempStartMarker);
     if (tempEndMarker) map.removeLayer(tempEndMarker);
+
+    // Clear BFS markers
+    bfsMarkers.forEach(m => map.removeLayer(m));
+    bfsMarkers = [];
+    bfsCircles.forEach(c => map.removeLayer(c));
+    bfsCircles = [];
 }
 
 function resetRouteDisplay() {
@@ -49,6 +57,23 @@ function showError(msg) {
 
 function hideError() {
     document.getElementById('errorMsg').style.display = 'none';
+}
+
+// ===== PANEL SWITCHING =====
+window.switchPanel = function(panelId) {
+    document.querySelectorAll('.panel-card').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    const panel = document.getElementById('panel-' + panelId);
+    if (panel) panel.style.display = 'block';
+    
+    const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
+    if (btn) btn.classList.add('active');
+
+    // Clear map when switching panels
+    clearMap();
+    tempStartMarker = null;
+    tempEndMarker = null;
 }
 
 async function loadAirportOptions() {
@@ -80,7 +105,7 @@ function setupInputListeners() {
 }
 
 function handleInputChange(e, inputId) {
-    resetRouteDisplay(); // Hide old routes and results when user starts typing a new airport
+    resetRouteDisplay();
     hideError();
 
     const val = e.target.value;
@@ -193,7 +218,15 @@ window.setMapSelection = function(inputId) {
     setTimeout(() => inputEl.style.backgroundColor = '', 500);
 }
 
-// --- ROUTE QUERY & RENDERING ---
+// ===== UTILITY: Extract IATA from display string =====
+function extractIATA(str) {
+    const match = str.match(/\(([A-Z]{3})\)/);
+    return match ? match[1] : str.substring(0, 3).toUpperCase();
+}
+
+// ===================================================================
+// PANEL 1: OPTIMAL ROUTE QUERY & RENDERING (Existing Dijkstra)
+// ===================================================================
 async function queryShortestRoute() {
     hideError();
     
@@ -204,11 +237,6 @@ async function queryShortestRoute() {
         showError('Please select both airports!');
         return;
     }
-
-    const extractIATA = (str) => {
-        const match = str.match(/\(([A-Z]{3})\)/);
-        return match ? match[1] : str.substring(0, 3).toUpperCase();
-    };
 
     const start = extractIATA(startRaw);
     const end = extractIATA(endRaw);
@@ -226,7 +254,6 @@ async function queryShortestRoute() {
             return;
         }
 
-        // Clear temporary pins before drawing the actual real route
         clearMap();
 
         currentRoutesData = data.routes;
@@ -311,7 +338,6 @@ window.switchTab = function(criteria) {
     document.getElementById('totalDistance').innerText = routeData.total_distance.toLocaleString() + ' km';
     document.getElementById('totalPrice').innerText = '$' + routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2});
 
-    // Remove old route layer to draw the new tab's route
     if (routeLine) map.removeLayer(routeLine);
     markers.forEach(m => map.removeLayer(m));
     markers = [];
@@ -355,7 +381,7 @@ function renderMap(data) {
             "dashArray": [15, 30],
             "weight": 5,
             "color": "#00E5FF", 
-            "pulseColor": "#001A4D", // Changed pulse color slightly to match light map
+            "pulseColor": "#001A4D",
             "paused": false,
             "reverse": false,
             "hardwareAccelerated": true
@@ -367,3 +393,285 @@ function renderMap(data) {
     routeLine.bindPopup(`<b>Optimal Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
     map.fitBounds(latlngs, { padding: [50, 50] });
 }
+
+
+// ===================================================================
+// PANEL 2: ALTERNATIVE ROUTES (DFS & Backtracking)
+// ===================================================================
+
+let altRoutesData = [];
+
+function showAltError(msg) {
+    const el = document.getElementById('altErrorMsg');
+    el.innerText = msg;
+    el.style.display = 'block';
+    document.getElementById('altResultArea').style.display = 'none';
+}
+
+function hideAltError() {
+    document.getElementById('altErrorMsg').style.display = 'none';
+}
+
+async function queryAlternativeRoutes() {
+    hideAltError();
+    clearMap();
+
+    const startRaw = document.getElementById('altStart').value;
+    const endRaw = document.getElementById('altEnd').value;
+    const maxConn = document.getElementById('maxConnections').value;
+
+    if (!startRaw || !endRaw) {
+        showAltError('Please select both airports!');
+        return;
+    }
+
+    const start = extractIATA(startRaw);
+    const end = extractIATA(endRaw);
+
+    try {
+        const res = await fetch('/api/alternative_routes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start, end, max_connections: parseInt(maxConn) })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+            showAltError(data.msg);
+            return;
+        }
+
+        altRoutesData = data.routes;
+        document.getElementById('altResultArea').style.display = 'block';
+        document.getElementById('altSummary').innerHTML = 
+            `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
+
+        renderAltRoutesList();
+
+        // Auto-select the first route
+        if (altRoutesData.length > 0) {
+            selectAltRoute(0);
+        }
+
+    } catch (err) {
+        showAltError('Network error. Check Flask server!');
+        console.error(err);
+    }
+}
+
+function renderAltRoutesList() {
+    const container = document.getElementById('altRoutesList');
+    container.innerHTML = '';
+
+    altRoutesData.forEach((route, idx) => {
+        const card = document.createElement('div');
+        card.className = 'alt-route-card';
+        card.dataset.index = idx;
+        card.onclick = () => selectAltRoute(idx);
+
+        const flights = route.path.length - 1;
+        const hours = Math.floor(route.total_time / 60);
+        const mins = route.total_time % 60;
+
+        card.innerHTML = `
+            <div class="route-number">Route ${idx + 1} · ${flights} flight${flights > 1 ? 's' : ''}</div>
+            <div class="route-path">${route.path.join(' → ')}</div>
+            <div class="route-stats">
+                <span>⏱ ${hours}h ${mins}m</span>
+                <span>📏 ${route.total_distance.toLocaleString()} km</span>
+                <span>💰 $${route.total_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function selectAltRoute(index) {
+    // Highlight selected card
+    document.querySelectorAll('.alt-route-card').forEach(c => c.classList.remove('selected'));
+    const selectedCard = document.querySelector(`.alt-route-card[data-index="${index}"]`);
+    if (selectedCard) selectedCard.classList.add('selected');
+
+    // Render on map
+    const route = altRoutesData[index];
+    if (!route) return;
+
+    // Clear existing route display
+    if (routeLine) map.removeLayer(routeLine);
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    // Build data object matching renderMap expectations
+    const mapData = {
+        path: route.path,
+        path_names: route.path_names,
+        coords: route.coords,
+        total_distance: route.total_distance,
+        total_price: route.total_price
+    };
+
+    renderMap(mapData);
+}
+
+// Make globally accessible
+window.queryAlternativeRoutes = queryAlternativeRoutes;
+
+
+// ===================================================================
+// PANEL 3: REACHABILITY MAP (BFS)
+// ===================================================================
+
+function showBfsError(msg) {
+    const el = document.getElementById('bfsErrorMsg');
+    el.innerText = msg;
+    el.style.display = 'block';
+    document.getElementById('bfsResultArea').style.display = 'none';
+}
+
+function hideBfsError() {
+    document.getElementById('bfsErrorMsg').style.display = 'none';
+}
+
+const BFS_COLORS = {
+    1: '#43a047',
+    2: '#1e88e5',
+    3: '#8e24aa',
+    4: '#e65100'
+};
+
+async function queryReachability() {
+    hideBfsError();
+    clearMap();
+
+    const startRaw = document.getElementById('bfsStart').value;
+    const maxStops = document.getElementById('maxStops').value;
+
+    if (!startRaw) {
+        showBfsError('Please select a starting airport!');
+        return;
+    }
+
+    const start = extractIATA(startRaw);
+
+    try {
+        const res = await fetch('/api/reachability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start, max_stops: parseInt(maxStops) })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+            showBfsError(data.msg);
+            return;
+        }
+
+        document.getElementById('bfsResultArea').style.display = 'block';
+
+        // Count total reachable airports
+        let totalCount = 0;
+        for (const level in data.reachable) {
+            totalCount += data.reachable[level].length;
+        }
+
+        document.getElementById('bfsSummary').innerHTML = 
+            `🌍 <strong>${totalCount}</strong> airports reachable from <strong>${data.start}</strong> within ${maxStops} flight${maxStops > 1 ? 's' : ''}`;
+
+        renderBfsLevels(data.reachable);
+        renderBfsMap(data);
+
+    } catch (err) {
+        showBfsError('Network error. Check Flask server!');
+        console.error(err);
+    }
+}
+
+function renderBfsLevels(reachable) {
+    const container = document.getElementById('bfsLevelList');
+    container.innerHTML = '';
+
+    const levelLabels = {
+        1: '1 Flight (Direct)',
+        2: '2 Flights (1 Stop)',
+        3: '3 Flights (2 Stops)',
+        4: '4 Flights (3 Stops)'
+    };
+
+    for (const level of Object.keys(reachable).sort()) {
+        const airports = reachable[level];
+        const group = document.createElement('div');
+        group.className = 'bfs-level-group';
+
+        const header = document.createElement('div');
+        header.className = `bfs-level-header level-${level}`;
+        header.textContent = `${levelLabels[level] || level + ' flights'} — ${airports.length} airport${airports.length > 1 ? 's' : ''}`;
+        group.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'bfs-airport-list';
+
+        airports.forEach(ap => {
+            const chip = document.createElement('span');
+            chip.className = 'bfs-airport-chip';
+            chip.textContent = ap.iata;
+            chip.title = ap.name;
+            chip.onclick = () => {
+                // Fly to this airport on the map
+                const coords = ap.coords;
+                if (coords) {
+                    map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
+                }
+            };
+            list.appendChild(chip);
+        });
+
+        group.appendChild(list);
+        container.appendChild(group);
+    }
+}
+
+function renderBfsMap(data) {
+    const startCoords = data.start_coords;
+    
+    // Add center marker
+    const centerMarker = L.marker([startCoords[0], startCoords[1]], {
+        icon: L.divIcon({ 
+            html: `<div class="premium-marker marker-bfs-center" style="width:40px; height:40px; font-size:18px;">✈</div>`, 
+            className: '' 
+        })
+    }).addTo(map).bindPopup(`<b>${data.start_name}</b><br>Starting Airport`);
+    bfsMarkers.push(centerMarker);
+
+    const allLatLngs = [[startCoords[0], startCoords[1]]];
+
+    // Add markers for each level with color coding
+    for (const level in data.reachable) {
+        const color = BFS_COLORS[level] || '#999';
+
+        data.reachable[level].forEach(ap => {
+            const [lat, lng] = ap.coords;
+            allLatLngs.push([lat, lng]);
+
+            const marker = L.circleMarker([lat, lng], {
+                radius: 5,
+                fillColor: color,
+                color: color,
+                weight: 1,
+                opacity: 0.8,
+                fillOpacity: 0.6
+            }).addTo(map).bindPopup(`<b>${ap.name}</b><br>${level} flight${level > 1 ? 's' : ''} from ${data.start}`);
+
+            bfsMarkers.push(marker);
+        });
+    }
+
+    // Fit map to show all reachable airports
+    if (allLatLngs.length > 1) {
+        map.fitBounds(allLatLngs, { padding: [40, 40] });
+    } else {
+        map.flyTo([startCoords[0], startCoords[1]], 5);
+    }
+}
+
+// Make globally accessible
+window.queryReachability = queryReachability;

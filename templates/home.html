@@ -12,10 +12,16 @@
 <body>
     <div class="header">
         <h1>✈ Flight Path Finder</h1>
+        <nav class="header-nav">
+            <button class="nav-btn active" data-panel="optimal" onclick="switchPanel('optimal')">🛫 Optimal Route</button>
+            <button class="nav-btn" data-panel="alternatives" onclick="switchPanel('alternatives')">🔀 Alternative Routes</button>
+            <button class="nav-btn" data-panel="reachability" onclick="switchPanel('reachability')">🌍 Where Can I Go?</button>
+        </nav>
     </div>
 
     <div class="container">
-        <div class="input-card">
+        <!-- ===== PANEL 1: OPTIMAL ROUTE (Existing) ===== -->
+        <div class="input-card panel-card" id="panel-optimal">
             <h2>Search Flights</h2>
             
             <div class="input-row">
@@ -46,6 +52,73 @@
                 <p><strong>Estimated Duration:</strong> <span id="totalHours"></span> h <span id="totalMins"></span> mins</p>
                 <p><strong>Estimated Distance:</strong> <span id="totalDistance"></span></p>
                 <p><strong>Estimated Price:</strong> <span id="totalPrice"></span></p>
+            </div>
+        </div>
+
+        <!-- ===== PANEL 2: ALTERNATIVE ROUTES (DFS & Backtracking) ===== -->
+        <div class="input-card panel-card" id="panel-alternatives" style="display: none;">
+            <h2>🔀 Alternative Routes</h2>
+            <p class="feature-desc">Find <strong>all possible routes</strong> between two airports using <em>DFS & Backtracking</em>.</p>
+
+            <div class="input-row">
+                <div class="input-item">
+                    <label for="altStart">From</label>
+                    <input type="text" id="altStart" list="airportList" autocomplete="off" placeholder="e.g. SIN">
+                </div>
+                <div class="input-item">
+                    <label for="altEnd">To</label>
+                    <input type="text" id="altEnd" list="airportList" autocomplete="off" placeholder="e.g. LHR">
+                </div>
+            </div>
+
+            <div class="input-item" style="margin-bottom: 15px;">
+                <label for="maxConnections">Max Connections (flights)</label>
+                <select id="maxConnections">
+                    <option value="1">1 (Direct only)</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+
+            <button class="search-btn" onclick="queryAlternativeRoutes()">Find All Routes</button>
+            <div class="error-msg" id="altErrorMsg"></div>
+
+            <div id="altResultArea" style="display: none;">
+                <div class="alt-summary" id="altSummary"></div>
+                <div class="alt-routes-list" id="altRoutesList"></div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL 3: REACHABILITY MAP (BFS) ===== -->
+        <div class="input-card panel-card" id="panel-reachability" style="display: none;">
+            <h2>🌍 Where Can I Go?</h2>
+            <p class="feature-desc">Discover all reachable airports from your starting point using <em>BFS (Breadth-First Search)</em>.</p>
+
+            <div class="input-row">
+                <div class="input-item">
+                    <label for="bfsStart">Starting Airport</label>
+                    <input type="text" id="bfsStart" list="airportList" autocomplete="off" placeholder="e.g. SIN">
+                </div>
+            </div>
+
+            <div class="input-item" style="margin-bottom: 15px;">
+                <label for="maxStops">Max Number of Flights</label>
+                <select id="maxStops">
+                    <option value="1">1 flight</option>
+                    <option value="2" selected>2 flights</option>
+                    <option value="3">3 flights</option>
+                    <option value="4">4 flights</option>
+                </select>
+            </div>
+
+            <button class="search-btn" onclick="queryReachability()">Explore Reachability</button>
+            <div class="error-msg" id="bfsErrorMsg"></div>
+
+            <div id="bfsResultArea" style="display: none;">
+                <div class="bfs-summary" id="bfsSummary"></div>
+                <div class="bfs-level-list" id="bfsLevelList"></div>
             </div>
         </div>
 

@@ -3,6 +3,11 @@ import json
 import os
 import math
 import heapq
+import sys
+import random
+from collections import deque
+
+sys.setrecursionlimit(10000)
 
 app = Flask(__name__)
 
@@ -106,7 +111,76 @@ def load_flight_data():
 
 load_flight_data()
 
-# DIJKSTRA'S ALGORITHM
+# ============================================================
+# FEATURE 3: QUICK SORT (Divide & Conquer) & BINARY SEARCH
+# ============================================================
+
+def quick_sort(arr, key_func):
+    """Quick Sort implementation using randomized pivot (Lomuto partition).
+    Sorts a list of items in-place based on a key function.
+    Randomized pivot avoids worst-case O(n^2) recursion on sorted input.
+    Syllabus Topics: Divide & Conquer, Sorting, Arrays.
+    """
+    def _partition(items, low, high):
+        # Randomized pivot: swap a random element into the pivot position
+        rand_idx = random.randint(low, high)
+        items[rand_idx], items[high] = items[high], items[rand_idx]
+
+        pivot = key_func(items[high])
+        i = low - 1
+        for j in range(low, high):
+            if key_func(items[j]) <= pivot:
+                i += 1
+                items[i], items[j] = items[j], items[i]
+        items[i + 1], items[high] = items[high], items[i + 1]
+        return i + 1
+
+    def _quick_sort_recursive(items, low, high):
+        if low < high:
+            pi = _partition(items, low, high)
+            _quick_sort_recursive(items, low, pi - 1)
+            _quick_sort_recursive(items, pi + 1, high)
+
+    if len(arr) > 1:
+        _quick_sort_recursive(arr, 0, len(arr) - 1)
+    return arr
+
+
+def binary_search(sorted_list, target):
+    """Binary Search implementation to find a target IATA code.
+    Returns the index if found, -1 otherwise.
+    Syllabus Topics: Divide & Conquer, Searching, Arrays.
+    """
+    low = 0
+    high = len(sorted_list) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if sorted_list[mid] == target:
+            return mid
+        elif sorted_list[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+
+# Pre-compute sorted IATA codes list for binary search after data loads
+sorted_iata_codes = []
+
+def build_sorted_iata_list():
+    """Build a sorted list of all valid IATA codes using Quick Sort."""
+    global sorted_iata_codes
+    codes = [code for code in flight_graph.keys()]
+    quick_sort(codes, key_func=lambda x: x)
+    sorted_iata_codes = codes
+
+# Build the sorted IATA list now that all functions are defined
+build_sorted_iata_list()
+
+
+# ============================================================
+# DIJKSTRA'S ALGORITHM (Existing - Shortest Path)
+# ============================================================
 def find_optimal_route(start_iata, end_iata, criteria='time'):
     queue = [(0, start_iata, [start_iata], 0, 0, 0)]
     visited = set()
@@ -139,6 +213,96 @@ def find_optimal_route(start_iata, end_iata, criteria='time'):
                         round(tot_price + price, 2)
                     ))
     return None, 0, 0, 0
+
+
+# ============================================================
+# FEATURE 1: ALTERNATIVE ROUTE FINDER (DFS & Backtracking)
+# ============================================================
+
+def find_all_routes_dfs(start, end, max_connections=3):
+    """Find all possible routes between two airports using DFS with Backtracking.
+    max_connections limits the maximum number of flights (edges) in a route.
+    Syllabus Topics: Graphs (DFS), Recursion, Backtracking.
+    """
+    all_routes = []
+
+    def dfs_backtrack(current, destination, path, visited, tot_time, tot_dist, tot_price):
+        # Base case: reached the destination
+        if current == destination:
+            all_routes.append({
+                "path": list(path),
+                "total_time": tot_time,
+                "total_distance": round(tot_dist, 2),
+                "total_price": round(tot_price, 2)
+            })
+            return
+
+        # Pruning: if we've used max_connections flights already, stop
+        if len(path) - 1 >= max_connections:
+            return
+
+        # Explore neighbors (DFS)
+        if current in flight_graph:
+            for neighbor, dur, dist, price in flight_graph[current]:
+                if neighbor not in visited:
+                    # Choose: add neighbor to path
+                    visited.add(neighbor)
+                    path.append(neighbor)
+
+                    # Explore: recurse
+                    dfs_backtrack(neighbor, destination, path, visited,
+                                  tot_time + dur, tot_dist + dist, tot_price + price)
+
+                    # Backtrack: undo the choice
+                    path.pop()
+                    visited.discard(neighbor)
+
+    visited_set = {start}
+    dfs_backtrack(start, end, [start], visited_set, 0, 0, 0)
+
+    # Sort results by total price for a nice presentation
+    all_routes.sort(key=lambda r: r["total_price"])
+    return all_routes
+
+
+# ============================================================
+# FEATURE 2: REACHABILITY MAP (BFS)
+# ============================================================
+
+def find_reachable_airports_bfs(start, max_stops=2):
+    """Find all airports reachable from a starting airport within max_stops flights.
+    Uses BFS with a Queue (deque) to explore level by level.
+    Syllabus Topics: Graphs (BFS), Abstract Data Types (Queues).
+    """
+    # Result: dict mapping stop_number -> list of airport info
+    reachable = {}
+    visited = {start}
+
+    # BFS Queue: each element is (airport_iata, current_depth)
+    queue = deque()
+    queue.append((start, 0))
+
+    while queue:
+        current, depth = queue.popleft()  # FIFO - Queue behavior
+
+        if depth > max_stops:
+            break
+
+        if current in flight_graph:
+            for neighbor, dur, dist, price in flight_graph[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    next_depth = depth + 1
+                    if next_depth <= max_stops:
+                        if next_depth not in reachable:
+                            reachable[next_depth] = []
+                        reachable[next_depth].append({
+                            "iata": neighbor,
+                            "name": airport_names.get(neighbor, neighbor)
+                        })
+                        queue.append((neighbor, next_depth))
+
+    return reachable
 
 @app.route('/')
 def index():
@@ -178,6 +342,9 @@ def get_shortest_route():
 
 @app.route('/api/airport_options')
 def get_airport_options():
+    """Returns a list of airports sorted alphabetically using Quick Sort.
+    Syllabus Topics: Divide & Conquer, Sorting (Quick Sort), Arrays.
+    """
     try:
         options = []
         for iata, name in airport_names.items():
@@ -189,11 +356,115 @@ def get_airport_options():
                     "lat": lat,
                     "lng": lng
                 })
-                
-        options.sort(key=lambda x: x["text"])
+
+        # FEATURE 3: Using our custom Quick Sort instead of Python's built-in .sort()
+        quick_sort(options, key_func=lambda x: x["text"])
         return jsonify({"code": 1, "options": options})
     except Exception as e:
         return jsonify({"code": 0, "msg": "Failed to load airports"})
+
+
+@app.route('/api/validate_iata', methods=['POST'])
+def validate_iata():
+    """Validate if an IATA code exists using Binary Search.
+    Syllabus Topics: Divide & Conquer, Searching (Binary Search), Arrays.
+    """
+    data = request.get_json()
+    iata = data.get('iata', '').upper().strip()
+    if not iata:
+        return jsonify({"code": 0, "msg": "No IATA code provided."})
+
+    index = binary_search(sorted_iata_codes, iata)
+    if index != -1:
+        return jsonify({
+            "code": 1,
+            "valid": True,
+            "iata": iata,
+            "name": airport_names.get(iata, iata)
+        })
+    else:
+        return jsonify({
+            "code": 1,
+            "valid": False,
+            "iata": iata,
+            "msg": f"IATA code '{iata}' not found."
+        })
+
+
+@app.route('/api/alternative_routes', methods=['POST'])
+def get_alternative_routes():
+    """API endpoint for Feature 1: Alternative Route Finder.
+    Uses DFS with Backtracking to find all routes up to max_connections.
+    """
+    data = request.get_json()
+    start = data.get('start', '').upper()
+    end = data.get('end', '').upper()
+    max_conn = data.get('max_connections', 3)
+
+    # Validate max_connections range
+    try:
+        max_conn = int(max_conn)
+        max_conn = max(1, min(max_conn, 5))  # Clamp between 1 and 5
+    except:
+        max_conn = 3
+
+    if start not in flight_graph or end not in flight_graph:
+        return jsonify({"code": 0, "msg": "Airport IATA not found!"})
+    if start == end:
+        return jsonify({"code": 0, "msg": "Departure and arrival cannot be the same!"})
+
+    routes = find_all_routes_dfs(start, end, max_conn)
+
+    if not routes:
+        return jsonify({"code": 0, "msg": f"No routes found within {max_conn} connections."})
+
+    # Add display names and coords for each route
+    for route in routes:
+        route["path_names"] = [airport_names.get(iata, iata) for iata in route["path"]]
+        route["coords"] = {iata: coords_dict[iata] for iata in route["path"]}
+
+    return jsonify({"code": 1, "routes": routes, "count": len(routes)})
+
+
+@app.route('/api/reachability', methods=['POST'])
+def get_reachability():
+    """API endpoint for Feature 2: Where Can I Go? Reachability Map.
+    Uses BFS to find all reachable airports within max_stops.
+    """
+    data = request.get_json()
+    start = data.get('start', '').upper()
+    max_stops = data.get('max_stops', 2)
+
+    try:
+        max_stops = int(max_stops)
+        max_stops = max(1, min(max_stops, 4))  # Clamp between 1 and 4
+    except:
+        max_stops = 2
+
+    if start not in flight_graph:
+        return jsonify({"code": 0, "msg": "Airport IATA not found!"})
+
+    reachable = find_reachable_airports_bfs(start, max_stops)
+
+    if not reachable:
+        return jsonify({"code": 0, "msg": "No reachable airports found."})
+
+    # Add coordinates for map rendering
+    for level, airports in reachable.items():
+        for ap in airports:
+            ap["coords"] = coords_dict.get(ap["iata"], (0, 0))
+
+    # Convert keys to strings for JSON serialization
+    result = {str(k): v for k, v in reachable.items()}
+
+    return jsonify({
+        "code": 1,
+        "reachable": result,
+        "start": start,
+        "start_name": airport_names.get(start, start),
+        "start_coords": coords_dict.get(start, (0, 0))
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -16,6 +16,11 @@ body {
     padding: 20px 40px;
     text-align: left;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .header h1 {
@@ -24,13 +29,45 @@ body {
     letter-spacing: 1px;
 }
 
+/* ===== Header Navigation ===== */
+.header-nav {
+    display: flex;
+    gap: 6px;
+}
+
+.nav-btn {
+    padding: 9px 18px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-color: rgba(255,255,255,0.5);
+}
+
+.nav-btn.active {
+    background: #FFB81C;
+    color: #001A4D;
+    border-color: #FFB81C;
+}
+
+/* ===== Layout ===== */
 .container {
     display: flex;
     flex-direction: row; 
     align-items: flex-start;
     padding: 30px;
     gap: 30px;
-    max-width: 1400px;
+    max-width: 1500px;
     margin: 0 auto;
 }
 
@@ -39,13 +76,22 @@ body {
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    flex: 0 0 380px; 
+    flex: 0 0 400px;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .input-card h2 {
     color: #001A4D;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     font-weight: 500;
+}
+
+.feature-desc {
+    font-size: 13.5px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
 }
 
 .input-row {
@@ -141,6 +187,7 @@ input[type="text"]:focus, select:focus {
     height: 100%;
 }
 
+/* ===== Tabs ===== */
 .route-tabs {
     display: flex;
     gap: 5px;
@@ -180,6 +227,7 @@ input[type="text"]:focus, select:focus {
     border: 1px solid #c8e6c9;
 }
 
+/* ===== Markers ===== */
 .premium-marker {
     display: flex;
     align-items: center;
@@ -202,4 +250,194 @@ input[type="text"]:focus, select:focus {
     color: white;
     font-size: 10px;
     font-weight: bold;
+}
+
+/* ===== FEATURE 1: Alternative Routes (DFS) ===== */
+.alt-summary {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 6px;
+    font-weight: 600;
+    color: #001A4D;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #bbdefb;
+}
+
+.alt-routes-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.alt-route-card {
+    padding: 14px 16px;
+    background: #f8f9fc;
+    border-left: 4px solid #7c4dff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.alt-route-card:hover {
+    background: #ede7f6;
+    transform: translateX(3px);
+}
+
+.alt-route-card.selected {
+    background: #ede7f6;
+    border-left-color: #FFB81C;
+    box-shadow: 0 2px 8px rgba(124, 77, 255, 0.15);
+}
+
+.alt-route-card .route-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7c4dff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.alt-route-card .route-path {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.alt-route-card .route-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.alt-route-card .route-stats span {
+    font-size: 12px;
+    color: #666;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+/* ===== FEATURE 2: Reachability Map (BFS) ===== */
+.bfs-summary {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #e8f5e9 0%, #e0f2f1 100%);
+    border-radius: 6px;
+    font-weight: 600;
+    color: #1b5e20;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #a5d6a7;
+}
+
+.bfs-level-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.bfs-level-group {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+}
+
+.bfs-level-header {
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bfs-level-header.level-1 { background: #43a047; }
+.bfs-level-header.level-2 { background: #1e88e5; }
+.bfs-level-header.level-3 { background: #8e24aa; }
+.bfs-level-header.level-4 { background: #e65100; }
+
+.bfs-airport-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #fafafa;
+}
+
+.bfs-airport-chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.bfs-airport-chip:hover {
+    background: #e8f5e9;
+    border-color: #43a047;
+    color: #2e7d32;
+}
+
+/* ===== BFS Marker Colors ===== */
+.marker-bfs-center {
+    background: #FFB81C;
+    color: #001A4D;
+    font-weight: bold;
+}
+.marker-bfs-1 { background: #43a047; color: white; }
+.marker-bfs-2 { background: #1e88e5; color: white; }
+.marker-bfs-3 { background: #8e24aa; color: white; }
+.marker-bfs-4 { background: #e65100; color: white; }
+
+/* ===== Scrollbar Styling ===== */
+.alt-routes-list::-webkit-scrollbar,
+.bfs-level-list::-webkit-scrollbar,
+.input-card::-webkit-scrollbar {
+    width: 6px;
+}
+.alt-routes-list::-webkit-scrollbar-thumb,
+.bfs-level-list::-webkit-scrollbar-thumb,
+.input-card::-webkit-scrollbar-thumb {
+    background-color: #c0c0c0;
+    border-radius: 3px;
+}
+
+/* ===== Loading Spinner ===== */
+.loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #001A4D;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
