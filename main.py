@@ -4,7 +4,6 @@ from utils.data_store import load_flight_data, build_sorted_iata_list
 from routes import main_bp
 
 sys.setrecursionlimit(10000)
-sys.stdout = sys.stderr  # Ensure prints appear alongside Flask debug output
 
 # Initialize Flask app
 app = Flask(__name__)
