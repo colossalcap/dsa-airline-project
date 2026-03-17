@@ -104,8 +104,16 @@ def find_all_routes_dfs(start, end, max_connections=3):
     all_routes = []
     recursion_calls = [0]
     backtracks = [0]
+    
+    # Safeguards for deep/unbounded search
+    max_routes = 200
+    start_time = time.time()
+    time_limit = 2.0
 
     def dfs_backtrack(current, destination, path, visited, tot_time, tot_dist, tot_price):
+        if len(all_routes) >= max_routes or (time.time() - start_time) > time_limit:
+            return
+            
         recursion_calls[0] += 1
 
         if current == destination:
@@ -122,6 +130,9 @@ def find_all_routes_dfs(start, end, max_connections=3):
 
         if current in flight_graph:
             for neighbor, dur, dist, price in flight_graph[current]:
+                if len(all_routes) >= max_routes or (time.time() - start_time) > time_limit:
+                    return
+                    
                 if neighbor not in visited:
                     visited.add(neighbor)
                     path.append(neighbor)
@@ -139,8 +150,14 @@ def find_all_routes_dfs(start, end, max_connections=3):
     dfs_backtrack(start, end, [start], visited_set, 0, 0, 0)
     elapsed = (time.time() - t_start) * 1000
 
+    limit_reason = ""
+    if len(all_routes) >= max_routes:
+        limit_reason = f" (Hit max limits of {max_routes} routes)"
+    elif elapsed > time_limit * 1000:
+        limit_reason = f" (Hit time limit of {time_limit}s)"
+
     print(f"  [DFS] Explored {recursion_calls[0]} recursive calls, {backtracks[0]} backtracks")
-    print(f"  [DFS] Found {len(all_routes)} routes in {elapsed:.2f}ms")
+    print(f"  [DFS] Found {len(all_routes)} routes in {elapsed:.2f}ms{limit_reason}")
 
     all_routes.sort(key=lambda r: r["total_price"])
     return all_routes
