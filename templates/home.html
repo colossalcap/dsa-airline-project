@@ -1,169 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flight Path Finder</title>
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../static/map/leaflet.css">
+    <link rel="stylesheet" href="/static/style.css?v=4">
     <script src="../static/map/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.3.0/dist/leaflet-ant-path.min.js"></script>
 </head>
+
 <body>
+
+    <!-- Header -->
     <div class="header">
-        <h1>✈ Flight Path Finder</h1>
-        <nav class="header-nav">
-            <button class="nav-btn active" data-panel="optimal" onclick="switchPanel('optimal')">🛫 Optimal Route</button>
-            <button class="nav-btn" data-panel="alternatives" onclick="switchPanel('alternatives')">🔀 Alternative Routes</button>
-            <button class="nav-btn" data-panel="reachability" onclick="switchPanel('reachability')">🌍 Where Can I Go?</button>
-        </nav>
+        <div class="title">
+            <div class="circle"><i class="fa fa-plane"></i></div>
+            <p>Flight Path Finder</p>
+        </div>
+        <div class="assist">
+            <div class="features">
+                <button class="nav-btn active" data-panel="optimal" onclick="switchPanel('optimal')">
+                    <i class="fa fa-plane"></i>Optimal Route</button>
+                <button class="nav-btn" data-panel="alternatives" onclick="switchPanel('alternatives')">
+                    <i class="fa fa-exchange"></i>Alternative Routes</button>
+                <button class="nav-btn" data-panel="reachability" onclick="switchPanel('reachability')">
+                    <i class="fa fa-globe"></i>Where Can I Go?</button>
+            </div>
+        </div>
     </div>
 
-    <div class="container">
-        <div class="input-card panel-card" id="panel-optimal">
-            <h2>Search Flights</h2>
-            
-            <div class="input-row">
-                <div class="input-item">
-                    <label for="startAirport">From</label>
-                    <input type="text" id="startAirport" list="airportList" autocomplete="off" placeholder="City or Airport (e.g. SIN)">
-                </div>
-                <div class="input-item">
-                    <label for="endAirport">To</label>
-                    <input type="text" id="endAirport" list="airportList" autocomplete="off" placeholder="City or Airport (e.g. LHR)">
+    <!-- Background Map -->
+    <div class="map-card">
+        <div id="map"></div>
+    </div>
+
+    <!-- First Panel -->
+    <div class="panel" id="panel-optimal">
+
+        <!-- Title -->
+        <div class=" title">
+            <p><i class="fa fa-plane"></i>Search Flight</p>
+            <p>Discover flight path easily</p>
+        </div>
+
+        <!-- Dropdown -->
+        <div class="input-row">
+            <div class="input-item">
+                <label for="startAirport">From</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" id="startAirport" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. SIN)">
+                    <i class="fa fa-chevron-down"></i>
                 </div>
             </div>
-            
-            <datalist id="airportList"></datalist>
-
-            <div class="action-row">
-                <button class="search-btn" onclick="queryShortestRoute()" style="flex: 1;">Search Flights</button>
-                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
-                    <span class="trash-icon">🗑️</span> Clear
-                </button>
-            </div>
-            
-            <div class="loading-bar" id="optimal-loading" style="display: none;">
-                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
-                <span class="loading-text">Running Dijkstra's Algorithm...</span>
-            </div>
-            <div class="error-msg" id="errorMsg"></div>
-
-            <div class="result" id="resultCard" style="display: none;">
-                <div class="route-tabs" id="routeTabs"></div>
-
-                <div id="bestOverallBadge" class="best-badge" style="display: none;">
-                    ⭐ This is the best overall route across all categories!
+            <div class="input-item">
+                <label for="endAirport">To</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" id="endAirport" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. LHR)">
+                    <i class="fa fa-chevron-down"></i>
                 </div>
-
-                <h4 id="routeTitle">Optimal Flight Itinerary</h4>
-                <p><strong>Route:</strong> <span id="routePath"></span></p>
-                <p><strong>Estimated Duration:</strong> <span id="totalHours"></span> h <span id="totalMins"></span> mins</p>
-                <p><strong>Estimated Distance:</strong> <span id="totalDistance"></span></p>
-                <p><strong>Estimated Price:</strong> <span id="totalPrice"></span></p>
             </div>
         </div>
 
-        <div class="input-card panel-card" id="panel-alternatives" style="display: none;">
-            <h2>🔀 Alternative Routes</h2>
-            <p class="feature-desc">Find <strong>all possible routes</strong> between two airports using <em>DFS & Backtracking</em>.</p>
+        <datalist id="airportList"></datalist>
 
-            <div class="input-row">
-                <div class="input-item">
-                    <label for="altStart">From</label>
-                    <input type="text" id="altStart" list="airportList" autocomplete="off" placeholder="e.g. SIN">
-                </div>
-                <div class="input-item">
-                    <label for="altEnd">To</label>
-                    <input type="text" id="altEnd" list="airportList" autocomplete="off" placeholder="e.g. LHR">
+        <!-- Action button -->
+        <div class="action-row">
+            <button class="search-btn" onclick="queryShortestRoute()"><i class="fa fa-search"></i>Search
+                Flights</button>
+            <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                <i class="fa fa-trash trash-icon"></i> Clear
+            </button>
+        </div>
+
+        <!-- Loading Bar -->
+        <div class="loading-bar" id="optimal-loading" style="display: none;">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <span class="loading-text">Running Dijkstra's Algorithm...</span>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Result -->
+        <div class="result" id="resultCard" style="display: none;">
+            <p>Recommended Routes</p>
+
+            <div id="bestOverallBadge" class="summary" style="display: none;">
+                ⭐ This is the <strong>BEST</strong> overall route across all categories!
+            </div>
+
+            <div class="result-box" id="result-box"></div>
+        </div>
+    </div>
+
+    <!-- Second Panel -->
+    <div class="panel" id="panel-alternatives" style="display: none;">
+
+        <!-- Title -->
+        <div class="title">
+            <p><i class="fa fa-exchange"></i>Alternative Routes</p>
+            <p>Find all possible routes between two airports using DFS & Backtracking</p>
+        </div>
+
+        <!-- Dropdown -->
+        <div class="input-row">
+
+            <div class="input-item">
+                <label for="altStart">From</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" id="altStart" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. SIN)">
+                    <i class="fa fa-chevron-down"></i>
                 </div>
             </div>
 
-            <div class="input-item" style="margin-bottom: 15px;">
+            <div class="input-item">
+                <label for="altEnd">To</label>
+
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" id="altEnd" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. LHR)">
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="input-item">
                 <label for="maxConnections">Max Connections (flights)</label>
-                <select id="maxConnections">
-                    <option value="1">1 (Direct only)</option>
-                    <option value="2">2</option>
-                    <option value="3" selected>3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-            </div>
-
-            <div class="action-row">
-                <button class="search-btn" onclick="queryAlternativeRoutes()" style="flex: 1;">Find All Routes</button>
-                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
-                    <span class="trash-icon">🗑️</span> Clear
-                </button>
-            </div>
-            
-            <div class="loading-bar" id="alt-loading" style="display: none;">
-                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
-                <span class="loading-text">Running DFS with Backtracking...</span>
-            </div>
-            <div class="error-msg" id="altErrorMsg"></div>
-
-            <div id="altResultArea" style="display: none;">
-                <div class="alt-summary" id="altSummary"></div>
-                
-                <div class="alt-sort-controls" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <label for="altSortSelect" style="margin-bottom: 0;">Sort By:</label>
-                    <select id="altSortSelect" onchange="sortAltRoutes()" style="width: auto; padding: 6px; font-size: 13px; cursor: pointer;">
-                        <option value="cheapest">💰 Cheapest</option>
-                        <option value="fastest">⏱️ Fastest</option>
-                        <option value="transits">🔀 Least Transits</option>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <select id="maxConnections">
+                        <option value="1">1 (Direct only)</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
                     </select>
-                </div>
-                
-                <div class="alt-routes-list" id="altRoutesList"></div>
-            </div>
-        </div>
-
-        <div class="input-card panel-card" id="panel-reachability" style="display: none;">
-            <h2>🌍 Where Can I Go?</h2>
-            <p class="feature-desc">Discover all reachable airports from your starting point using <em>BFS (Breadth-First Search)</em>.</p>
-
-            <div class="input-row">
-                <div class="input-item">
-                    <label for="bfsStart">Starting Airport</label>
-                    <input type="text" id="bfsStart" list="airportList" autocomplete="off" placeholder="e.g. SIN">
+                    <i class="fa fa-chevron-down"></i>
                 </div>
             </div>
 
-            <div class="input-item" style="margin-bottom: 15px;">
-                <label for="maxStops">Max Number of Flights</label>
-                <select id="maxStops">
-                    <option value="1">1 flight</option>
-                    <option value="2" selected>2 flights</option>
-                    <option value="3">3 flights</option>
-                    <option value="4">4 flights</option>
-                </select>
-            </div>
-
-            <div class="action-row">
-                <button class="search-btn" onclick="queryReachability()" style="flex: 1;">Explore Reachability</button>
-                <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
-                    <span class="trash-icon">🗑️</span> Clear
-                </button>
-            </div>
-            
-            <div class="loading-bar" id="bfs-loading" style="display: none;">
-                <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
-                <span class="loading-text">Running BFS (Breadth-First Search)...</span>
-            </div>
-            <div class="error-msg" id="bfsErrorMsg"></div>
-
-            <div id="bfsResultArea" style="display: none;">
-                <div class="bfs-summary" id="bfsSummary"></div>
-                <div class="bfs-level-list" id="bfsLevelList"></div>
-            </div>
         </div>
 
-        <div class="map-card">
-            <div id="map"></div>
+        <!-- Action button -->
+        <div class="action-row">
+            <button class="search-btn" onclick="queryAlternativeRoutes()" style="flex: 1;">Find All Routes</button>
+            <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                <i class="fa fa-trash trash-icon"></i>Clear
+            </button>
+        </div>
+
+        <!-- Loading Bar -->
+        <div class="loading-bar" id="alt-loading" style="display: none;">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <span class="loading-text">Running DFS with Backtracking...</span>
+        </div>
+        <div class="error-msg" id="altErrorMsg"></div>
+
+        <!-- Result Box -->
+        <div id="altResultArea" style="display: none;">
+            <div class="summary" id="altSummary"></div>
+
+            <div class="alt-sort-controls">
+                <p>Sort By</p>
+                <div class="route-tabs">
+                    <button class="tab-btn cheapest" onclick="sortAltRoutes('cheapest', this)"><i
+                            class="fa fa-dollar"></i>Cheapest</button>
+                    <button class="tab-btn fastest" onclick="sortAltRoutes('fastest', this)"><i
+                            class="fa fa-clock-o"></i>Fastest</button>
+                    <button class="tab-btn shortest" onclick="sortAltRoutes('shortest', this)"><i
+                            class="fa fa-bolt"></i>Shortest</button>
+                </div>
+            </div>
+
+            <p>Recommended Routes</p>
+
+            <div id="altRoutesList"></div>
         </div>
     </div>
+
+    <!-- Third Panel -->
+    <div class="panel" id="panel-reachability" style="display: none;">
+
+        <!-- Title -->
+        <div class="title">
+            <p><i class="fa fa-globe"></i>Where Can I Go?</p>
+            <p>Discover all reachable airports from your starting point using BFS (Breadth-First Search)</p>
+        </div>
+
+        <!-- Dropdown -->
+        <div class="input-row">
+            <div class="input-item">
+                <label for="altStart">From</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" id="bfsStart" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. SIN)">
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="input-item"">
+                <label for=" maxStops">Max Number of Flights</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <select id="maxStops">
+                        <option value="1">1 flight</option>
+                        <option value="2" selected="">2 flights</option>
+                        <option value="3">3 flights</option>
+                        <option value="4">4 flights</option>
+                    </select>
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action button -->
+        <div class="action-row">
+            <button class="search-btn" onclick="queryReachability()" style="flex: 1;">Explore Reachability</button>
+            <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                <i class="fa fa-trash trash-icon"></i>Clear
+            </button>
+        </div>
+
+        <!-- Loading Bar -->
+        <div class="loading-bar" id="bfs-loading" style="display: none;">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <span class="loading-text">Running BFS from MLG (max 3 flights) ...</span>
+        </div>
+        <div class="error-msg" id="bfsErrorMsg" style="display: none;"></div>
+
+        <div id="bfsResultArea" style="display: none;">
+            <div class="summary" id="bfsSummary">🌍 <strong>1163</strong> airports reachable from
+                <strong>MLG</strong> within 3 flights
+            </div>
+
+            <p><i class="fa fa-plane"></i>Reachable Airports</p>
+
+            <div class="bfsControls">
+                <div class="level-1 selected" onclick="switchLevel(this)">Direct</div>
+                <div class="level-2" onclick="switchLevel(this)">1 Stop</div>
+                <div class="level-3" onclick="switchLevel(this)">2 Stops</div>
+                <div class="level-4" onclick="switchLevel(this)">3 Stops</div>
+            </div>
+
+            <div class="bfs-level-list" id="bfsLevelList"></div>
+        </div>
+    </div>
+
 
     <script src="/static/script.js?v=4"></script>
 </body>
+
 </html>

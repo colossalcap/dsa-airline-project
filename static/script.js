@@ -1,7 +1,7 @@
 let map, markers = [], routeLine = null;
-let currentRoutesData = {}; 
-let globalAirports = []; 
-let tempStartMarker = null; 
+let currentRoutesData = {};
+let globalAirports = [];
+let tempStartMarker = null;
 let tempEndMarker = null;
 let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
@@ -17,11 +17,11 @@ function fadeOutAndRemove(layer) {
             const el = layer.getElement();
             if (el && el.classList) el.classList.add('fade-out-layer');
         }
-        
+
         // Safe access for standard HTML markers
         if (layer._icon && layer._icon.classList) layer._icon.classList.add('fade-out-layer');
         if (layer._shadow && layer._shadow.classList) layer._shadow.classList.add('fade-out-layer');
-        
+
         // Safe access for grouped layers like AntPath
         if (typeof layer.eachLayer === 'function') {
             layer.eachLayer(subLayer => {
@@ -57,7 +57,7 @@ function hideLoading(panelId) {
     if (bar) bar.style.display = 'none';
 }
 
-window.onload = async function() {
+window.onload = async function () {
     initMap();
     await loadAirportOptions();
     setupInputListeners();
@@ -65,7 +65,7 @@ window.onload = async function() {
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
-    
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
@@ -76,10 +76,10 @@ function initMap() {
 function clearMap() {
     markers.forEach(fadeOutAndRemove);
     markers = [];
-    
+
     if (routeLine) fadeOutAndRemove(routeLine);
     routeLine = null;
-    
+
     if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
     if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
     tempStartMarker = null;
@@ -113,9 +113,9 @@ function hideError() {
 }
 
 // ===== PANEL SWITCHING & SYNCING =====
-window.switchPanel = function(panelId) {
+window.switchPanel = function (panelId) {
     let currentStart = "", currentEnd = "";
-    
+
     if (activePanel === 'optimal') {
         currentStart = document.getElementById('startAirport').value;
         currentEnd = document.getElementById('endAirport').value;
@@ -133,12 +133,12 @@ window.switchPanel = function(panelId) {
     document.getElementById('endAirport').value = currentEnd;
     document.getElementById('altEnd').value = currentEnd;
 
-    document.querySelectorAll('.panel-card').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
+
     const panel = document.getElementById('panel-' + panelId);
     if (panel) panel.style.display = 'block';
-    
+
     const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
     if (btn) btn.classList.add('active');
 
@@ -150,21 +150,28 @@ window.switchPanel = function(panelId) {
 }
 
 // ===== CLEAR ALL INPUTS UTILITY =====
-window.clearAllInputs = function() {
+window.clearAllInputs = function () {
     document.getElementById('startAirport').value = '';
     document.getElementById('endAirport').value = '';
     document.getElementById('altStart').value = '';
     document.getElementById('altEnd').value = '';
     document.getElementById('bfsStart').value = '';
-    
+
     document.getElementById('resultCard').style.display = 'none';
     document.getElementById('altResultArea').style.display = 'none';
     document.getElementById('bfsResultArea').style.display = 'none';
-    
+
+    const bars = document.querySelectorAll('.loading-bar');
+    bars.forEach(bar => {
+        bar.style.display = 'none';
+    });
+
+    document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
+
     hideError();
-    if(typeof hideAltError === 'function') hideAltError();
-    if(typeof hideBfsError === 'function') hideBfsError();
-    
+    if (typeof hideAltError === 'function') hideAltError();
+    if (typeof hideBfsError === 'function') hideBfsError();
+
     clearMap();
     resetRouteDisplay();
 };
@@ -173,14 +180,14 @@ async function loadAirportOptions() {
     try {
         const res = await fetch('/api/airport_options');
         const data = await res.json();
-        
+
         if (data.code === 1 && Array.isArray(data.options)) {
-            globalAirports = data.options; 
+            globalAirports = data.options;
             const dataList = document.getElementById('airportList');
-            dataList.innerHTML = ''; 
-            
+            dataList.innerHTML = '';
+
             data.options.forEach(option => {
-                if (option.value && option.text) { 
+                if (option.value && option.text) {
                     const opt = document.createElement('option');
                     opt.value = option.text;
                     dataList.appendChild(opt);
@@ -203,21 +210,21 @@ function handleInputChange(e, inputId) {
 
     const val = e.target.value;
     const matchedAirport = globalAirports.find(ap => ap.text === val);
-    
+
     if (matchedAirport) {
         const lat = matchedAirport.lat;
         const lng = matchedAirport.lng;
-        
+
         if (inputId === 'startAirport') {
             if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
             tempStartMarker = L.marker([lat, lng], {
-                icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
-            }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
+                icon: L.divIcon({ html: `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`, className: '' })
+            }).addTo(map).bindTooltip("Departure Set", { permanent: true, direction: "top" }).openTooltip();
         } else {
             if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
             tempEndMarker = L.marker([lat, lng], {
-                icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
-            }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
+                icon: L.divIcon({ html: `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`, className: '' })
+            }).addTo(map).bindTooltip("Arrival Set", { permanent: true, direction: "top" }).openTooltip();
         }
         map.flyTo([lat, lng], 5, { duration: 1.5 });
     } else {
@@ -233,33 +240,33 @@ function handleInputChange(e, inputId) {
 
 // --- SMART RADAR MAP CLICK LOGIC ---
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371; 
-    const dLat = (lat2 - lat1) * (Math.PI/180);
-    const dLon = (lon2 - lon1) * (Math.PI/180); 
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    return R * c; 
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
 function handleMapClick(e) {
     const clickLat = e.latlng.lat;
     const clickLng = e.latlng.lng;
-    
+
     const nearbyAirports = globalAirports.filter(airport => {
         const dist = getDistanceFromLatLonInKm(clickLat, clickLng, airport.lat, airport.lng);
-        return dist <= 150; 
+        return dist <= 150;
     });
 
     if (nearbyAirports.length === 0) {
         L.popup()
             .setLatLng(e.latlng)
-            .setContent("<div style='text-align:center; color:#333;'><b>No airports found within 150km.</b><br>Try clicking closer to a city!</div>")
+            .setContent("<div class='custom-map-popup'><b>No airports found within 150km.</b><br>Try clicking closer to a city!</div>")
             .openOn(map);
         return;
     }
 
     let optionsHtml = nearbyAirports.map(ap => `<option value="${ap.text}" data-lat="${ap.lat}" data-lng="${ap.lng}">${ap.text}</option>`).join('');
-    
+
     let popupContent = `
         <div style="text-align:center; min-width: 200px; color:#333;">
             <b style="color:#001A4D;">${nearbyAirports.length} Airport(s) Nearby</b><br>
@@ -279,7 +286,7 @@ function handleMapClick(e) {
         .openOn(map);
 }
 
-window.setMapSelection = function(inputId) {
+window.setMapSelection = function (inputId) {
     resetRouteDisplay();
     hideError();
 
@@ -298,17 +305,17 @@ window.setMapSelection = function(inputId) {
     }
 
     map.closePopup();
-    
+
     if (inputId === 'startAirport') {
         if (tempStartMarker) fadeOutAndRemove(tempStartMarker);
         tempStartMarker = L.marker([lat, lng], {
-            icon: L.divIcon({ html: `<div class="premium-marker marker-start" style="width:30px; height:30px;">🛫</div>`, className: '' })
-        }).addTo(map).bindTooltip("Departure Set", {permanent: true, direction: "top"}).openTooltip();
+            icon: L.divIcon({ html: `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`, className: '' })
+        }).addTo(map).bindTooltip("Departure Set", { permanent: true, direction: "top" }).openTooltip();
     } else {
         if (tempEndMarker) fadeOutAndRemove(tempEndMarker);
         tempEndMarker = L.marker([lat, lng], {
-            icon: L.divIcon({ html: `<div class="premium-marker marker-end" style="width:30px; height:30px;">🛬</div>`, className: '' })
-        }).addTo(map).bindTooltip("Arrival Set", {permanent: true, direction: "top"}).openTooltip();
+            icon: L.divIcon({ html: `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`, className: '' })
+        }).addTo(map).bindTooltip("Arrival Set", { permanent: true, direction: "top" }).openTooltip();
     }
 
     map.flyTo([lat, lng], 5, { duration: 1.5 });
@@ -319,12 +326,17 @@ function extractIATA(str) {
     return match ? match[1] : str.substring(0, 3).toUpperCase();
 }
 
+function extractAirportName(str) {
+    const parts = str.split(") - ");
+    return parts[1];
+}
+
 // ===================================================================
 // PANEL 1: OPTIMAL ROUTE QUERY
 // ===================================================================
 async function queryShortestRoute() {
     hideError();
-    
+
     const startRaw = document.getElementById('startAirport').value;
     const endRaw = document.getElementById('endAirport').value;
 
@@ -358,8 +370,6 @@ async function queryShortestRoute() {
         currentRoutesData = data.routes;
         generateDynamicTabs();
 
-        const firstTabCrit = document.querySelector('.tab-btn').dataset.target;
-        switchTab(firstTabCrit);
         document.getElementById('resultCard').style.display = 'block';
 
     } catch (err) {
@@ -373,17 +383,17 @@ async function queryShortestRoute() {
 function generateDynamicTabs() {
     const uniquePaths = {};
     const criteriaNames = {
-        'time': 'Fastest',
-        'price': 'Cheapest',
-        'distance': 'Shortest Distance',
-        'connections': 'Fewest Stops'
+        'price': 'cheapest',
+        'time': 'fastest',
+        'distance': 'shortest',
+        'connections': 'fewest'
     };
 
-    for (const crit of ['time', 'price', 'distance', 'connections']) {
+    for (const crit of ['price', 'time',  'distance', 'connections']) {
         const route = currentRoutesData[crit];
         if (!route) continue;
         const pathStr = route.path.join(',');
-        
+
         if (!uniquePaths[pathStr]) {
             uniquePaths[pathStr] = { criterias: [crit], routeData: route };
         } else {
@@ -391,88 +401,117 @@ function generateDynamicTabs() {
         }
     }
 
-    const tabsContainer = document.getElementById('routeTabs');
-    tabsContainer.innerHTML = '';
+    const bestBadge = document.getElementById('bestOverallBadge');
+    const allRoutesContainer = document.getElementById('result-box');
+    allRoutesContainer.innerHTML = '';
     const pathKeys = Object.keys(uniquePaths);
 
     if (pathKeys.length === 1) {
-        document.getElementById('bestOverallBadge').style.display = 'block';
-        tabsContainer.style.display = 'none';
-        const singleCrit = uniquePaths[pathKeys[0]].criterias[0];
-        currentRoutesData[singleCrit].groupedTitle = 'Best Overall Itinerary';
-        const btn = document.createElement('button');
-        btn.className = 'tab-btn';
-        btn.dataset.target = singleCrit;
-        tabsContainer.appendChild(btn);
+        bestBadge.style.display = 'block';
+        const singlePath = uniquePaths[pathKeys[0]];
+        createRouteCard(singlePath, 'Best Route', allRoutesContainer, criteriaNames);
     } else {
-        document.getElementById('bestOverallBadge').style.display = 'none';
-        tabsContainer.style.display = 'flex';
-        for (const pathStr in uniquePaths) {
-            const group = uniquePaths[pathStr];
-            const tabLabels = group.criterias.map(c => criteriaNames[c]).join(' & ');
-            const primaryCrit = group.criterias[0];
-            const btn = document.createElement('button');
-            btn.className = 'tab-btn';
-            btn.onclick = () => switchTab(primaryCrit);
-            btn.innerText = tabLabels;
-            btn.dataset.target = primaryCrit;
-            tabsContainer.appendChild(btn);
-            group.criterias.forEach(c => {
-                currentRoutesData[c].groupedTitle = tabLabels + ' Itinerary';
-            });
-        }
+        if (bestBadge) bestBadge.style.display = 'none';
+        pathKeys.forEach((pathKey, index) => {
+            const pathData = uniquePaths[pathKey];
+            const cardTitle = `Route ${index + 1}`;
+            createRouteCard(pathData, cardTitle, allRoutesContainer, criteriaNames);
+        });
+    }
+
+    if (pathKeys.length > 0) {
+        const firstRouteData = uniquePaths[pathKeys[0]].routeData;
+        if (routeLine) fadeOutAndRemove(routeLine);
+        markers.forEach(fadeOutAndRemove);
+        markers = [];
+        renderMap(firstRouteData);
+        document.querySelector('.result-card').classList.add('selected');
     }
 }
 
-window.switchTab = function(criteria) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`.tab-btn[data-target="${criteria}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
+function createRouteCard(pathData, cardTitle, container, criteriaNames) {
+    if (!container || !pathData || !pathData.routeData) return;
 
-    const routeData = currentRoutesData[criteria];
-    if (!routeData) return;
+    const routeData = pathData.routeData;
+    const stops = routeData.path.length - 2;
+    const hour = Math.floor(routeData.total_time / 60);
+    const min = routeData.total_time % 60;
 
-    document.getElementById('routeTitle').innerText = routeData.groupedTitle;
-    document.getElementById('routePath').innerText = routeData.path.join(' → ');
-    document.getElementById('totalHours').innerText = Math.floor(routeData.total_time / 60);
-    document.getElementById('totalMins').innerText = routeData.total_time % 60;
-    document.getElementById('totalDistance').innerText = routeData.total_distance.toLocaleString() + ' km';
-    document.getElementById('totalPrice').innerText = '$' + routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2});
+    const typeHTML = pathData.criterias.map(crit => `
+        <div class="${criteriaNames[crit]}"></div>
+    `).join('');
 
-    if (routeLine) fadeOutAndRemove(routeLine);
-    markers.forEach(fadeOutAndRemove);
-    markers = [];
+    const cardClasses = ['result-card'].concat(pathData.criterias.map(c => criteriaNames[c])).join(' ');
+
+    // 构建卡片HTML结构
+    const cardHTML = `
+        <div class="${cardClasses}">
+
+            <div class="first">
+                <div class="title">${cardTitle}</div>
+                <div class="type">${typeHTML}</div>
+            </div>
+            
+            <div class="second">
+                <div class="path">${routeData.path.join(' → ')}</div>
+                <div class="stops">${stops <= 0 ? 'Direct' : `${stops} stop${stops > 1 ? 's' : ''}`}</div>
+                <div class="time">${hour}h ${min}m</div>
+            </div>
+
+            <div class="third">
+                <div class="price">$${routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="distance">${routeData.total_distance.toLocaleString()} km</div>
+            </div>
+            
+            <div class="showRoute">Show on Map</div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', cardHTML);
+
+    const cardElement = container.lastElementChild;
+    const showMapBtn = cardElement.querySelector('.showRoute');
     
-    renderMap(routeData);
+    showMapBtn.addEventListener('click', () => {
+        if (routeLine) fadeOutAndRemove(routeLine);
+        markers.forEach(fadeOutAndRemove);
+        markers = [];
+        renderMap(routeData);
+        
+        document.querySelectorAll('.result-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        cardElement.classList.add('selected');
+    });
 }
 
 function renderMap(data) {
-    const { path, path_names, coords } = data; 
+    const { path, path_names, coords } = data;
     const latlngs = [];
-    
+
     path.forEach((iata, index) => {
-        const fullName = path_names[index]; 
+        const fullName = path_names[index];
         const [lat, lng] = coords[iata];
         latlngs.push([lat, lng]);
-        
+
         let markerHtml = '';
         let popupText = '';
-        
+
         if (index === 0) {
-            markerHtml = `<div class="premium-marker marker-start" style="width:35px; height:35px;">🛫</div>`;
+            markerHtml = `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`;
             popupText = `<b>${fullName}</b><br>Departure Airport`;
         } else if (index === path.length - 1) {
-            markerHtml = `<div class="premium-marker marker-end" style="width:35px; height:35px;">🛬</div>`;
+            markerHtml = `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`;
             popupText = `<b>${fullName}</b><br>Arrival Airport`;
         } else {
-            markerHtml = `<div class="premium-marker marker-layover" style="width:25px; height:25px;">🔵</div>`;
+            markerHtml = `<div class="marker-layover"><i class="fa fa-map-marker"></i></div>`;
             popupText = `<b>${fullName}</b><br>Layover`;
         }
 
         const marker = L.marker([lat, lng], {
             icon: L.divIcon({ html: markerHtml, className: '' })
         }).addTo(map).bindPopup(popupText);
-        
+
         markers.push(marker);
     });
 
@@ -481,7 +520,7 @@ function renderMap(data) {
             "delay": 400,
             "dashArray": [15, 30],
             "weight": 5,
-            "color": "#00E5FF", 
+            "color": "#00E5FF",
             "pulseColor": "#001A4D",
             "paused": false,
             "reverse": false,
@@ -490,7 +529,7 @@ function renderMap(data) {
     } else {
         routeLine = L.polyline(latlngs, { color: '#00E5FF', weight: 4 }).addTo(map);
     }
-    
+
     routeLine.bindPopup(`<b>Optimal Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
     map.fitBounds(latlngs, { padding: [50, 50] });
 }
@@ -548,10 +587,10 @@ async function queryAlternativeRoutes() {
 
         altRoutesData = data.routes;
         document.getElementById('altResultArea').style.display = 'block';
-        document.getElementById('altSummary').innerHTML = 
+        document.getElementById('altSummary').innerHTML =
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
-        document.getElementById('altSortSelect').value = 'cheapest';
+        // document.getElementById('altSortSelect').value = 'cheapest';
         renderAltRoutesList();
 
         if (altRoutesData.length > 0) {
@@ -565,19 +604,23 @@ async function queryAlternativeRoutes() {
     }
 }
 
-window.sortAltRoutes = function() {
-    const sortCriteria = document.getElementById('altSortSelect').value;
-    
-    if (sortCriteria === 'cheapest') {
+window.sortAltRoutes = function (value, element) {
+
+    const buttons = document.querySelectorAll('.alt-sort-controls .tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    element.classList.add('active');
+
+    if (value === 'cheapest') {
         altRoutesData.sort((a, b) => a.total_price - b.total_price);
-    } else if (sortCriteria === 'fastest') {
+    } else if (value === 'fastest') {
         altRoutesData.sort((a, b) => a.total_time - b.total_time);
-    } else if (sortCriteria === 'transits') {
-        altRoutesData.sort((a, b) => a.path.length - b.path.length);
+    } else if (value === 'shortest') {
+        altRoutesData.sort((a, b) => a.total_distance - b.total_distance);
     }
-    
+
     renderAltRoutesList();
-    
+
     if (altRoutesData.length > 0) {
         selectAltRoute(0);
     }
@@ -587,27 +630,43 @@ function renderAltRoutesList() {
     const container = document.getElementById('altRoutesList');
     container.innerHTML = '';
 
+    const minPrice = Math.min(...altRoutesData.map(r => r.total_price));
+    const minTime = Math.min(...altRoutesData.map(r => r.total_time));
+    const minDistance = Math.min(...altRoutesData.map(r => r.total_distance));
+
     altRoutesData.forEach((route, idx) => {
         const card = document.createElement('div');
-        card.className = 'alt-route-card';
+        card.classList.add('alt-route-card', 'result-card');
         card.dataset.index = idx;
-        card.onclick = () => selectAltRoute(idx);
+        let typeHTML = "";
 
-        const flights = route.path.length - 1;
+        const flights = route.path.length - 2;
         const hours = Math.floor(route.total_time / 60);
         const mins = route.total_time % 60;
 
+        if (route.total_price === minPrice) {
+            card.classList.add("cheapest");
+            typeHTML += `<div class="cheapest"></div>`
+        }
+        if (route.total_time === minTime) {
+            card.classList.add("fastest");
+            typeHTML += `<div class="fastest"></div>`
+        }
+        if (route.total_distance === minDistance) {
+            card.classList.add("shortest");
+            typeHTML += `<div class="shortest"></div>`
+        }
+
         card.innerHTML = `
-            <div class="route-number">Route ${idx + 1} · ${flights} flight${flights > 1 ? 's' : ''}</div>
-            <div class="route-path">${route.path.join(' → ')}</div>
-            <div class="route-stats">
-                <span>⏱ ${hours}h ${mins}m</span>
-                <span>📏 ${route.total_distance.toLocaleString()} km</span>
-                <span>💰 $${route.total_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-            </div>
+            <div class="first"><div class="title">Route ${idx + 1}</div><div class="type">${typeHTML}</div></div>
+            <div class="second"><div class="path">${route.path.join(' → ')}</div><div class="stops">${flights <= 0 ? 'Direct' : `${flights} stop${flights > 1 ? 's' : ''}`}</div><div class="time">${hours}h ${mins}m</div></div>
+            <div class="third"><div class="price">$${route.total_price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
+            <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
         `;
         container.appendChild(card);
     });
+    selectAltRoute(0);
 }
 
 function selectAltRoute(index) {
@@ -651,10 +710,10 @@ function hideBfsError() {
 }
 
 const BFS_COLORS = {
-    1: '#43a047',
-    2: '#1e88e5',
-    3: '#8e24aa',
-    4: '#e65100'
+    1: 'rgb(27, 103, 246)',
+    2: 'rgb(34, 197, 94)',
+    3: 'rgb(168, 85, 247)',
+    4: 'rgb(255, 107, 0)'
 };
 
 async function queryReachability() {
@@ -690,13 +749,14 @@ async function queryReachability() {
         }
 
         document.getElementById('bfsResultArea').style.display = 'block';
+        document.querySelector(".bfsControls .level-1").classList.add("selected");
 
         let totalCount = 0;
         for (const level in data.reachable) {
             totalCount += data.reachable[level].length;
         }
 
-        document.getElementById('bfsSummary').innerHTML = 
+        document.getElementById('bfsSummary').innerHTML =
             `🌍 <strong>${totalCount}</strong> airports reachable from <strong>${data.start}</strong> within ${maxStops} flight${maxStops > 1 ? 's' : ''}`;
 
         renderBfsLevels(data.reachable);
@@ -711,23 +771,28 @@ async function queryReachability() {
 
 function renderBfsLevels(reachable) {
     const container = document.getElementById('bfsLevelList');
+    const airport = extractAirportName(document.getElementById('bfsStart').value);
     container.innerHTML = '';
 
     const levelLabels = {
-        1: '1 Flight (Direct)',
-        2: '2 Flights (1 Stop)',
-        3: '3 Flights (2 Stops)',
-        4: '4 Flights (3 Stops)'
+        1: 'Direct',
+        2: '1 Stop',
+        3: '2 Stops',
+        4: '3 Stops'
     };
 
     for (const level of Object.keys(reachable).sort()) {
+        // Make button appear
+        document.querySelector(`.bfsControls .level-${level}`).style.display = "block";
+
         const airports = reachable[level];
         const group = document.createElement('div');
-        group.className = 'bfs-level-group';
+        group.classList.add('bfsGroup', `level-${level}`);
 
         const header = document.createElement('div');
-        header.className = `bfs-level-header level-${level}`;
-        header.textContent = `${levelLabels[level] || level + ' flights'} — ${airports.length} airport${airports.length > 1 ? 's' : ''}`;
+        const span = document.createElement('span');
+        header.className = `title`;
+        header.innerHTML = `${levelLabels[level] + ' flights'} from <span>${airport}</span>`;
         group.appendChild(header);
 
         const list = document.createElement('div');
@@ -748,17 +813,23 @@ function renderBfsLevels(reachable) {
         });
 
         group.appendChild(list);
+
+        const footer = document.createElement('div');
+        footer.className = `total`;
+        footer.textContent = `Total: ${airports.length} ${level > 1 ? '' : 'direct '}airport${airports.length > 1 ? 's' : ''} ${level > 1 ? 'with ' + levelLabels[level] : ''}`;
+        group.appendChild(footer);
+
         container.appendChild(group);
     }
 }
 
 function renderBfsMap(data) {
     const startCoords = data.start_coords;
-    
+
     const centerMarker = L.marker([startCoords[0], startCoords[1]], {
-        icon: L.divIcon({ 
-            html: `<div class="premium-marker marker-bfs-center" style="width:40px; height:40px; font-size:18px;">✈</div>`, 
-            className: '' 
+        icon: L.divIcon({
+            html: `<div class="premium-marker marker-bfs-center" style="width:40px; height:40px; font-size:18px;">✈</div>`,
+            className: ''
         })
     }).addTo(map).bindPopup(`<b>${data.start_name}</b><br>Starting Airport`);
     bfsMarkers.push(centerMarker);
@@ -790,6 +861,16 @@ function renderBfsMap(data) {
     } else {
         map.flyTo([startCoords[0], startCoords[1]], 5);
     }
+}
+
+function switchLevel(btn) {
+    document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    const level = btn.classList[0];
+    document.querySelectorAll('.bfsGroup').forEach(group => {
+        group.style.display = group.classList.contains(level) ? 'block' : 'none';
+    });
 }
 
 window.queryReachability = queryReachability;
