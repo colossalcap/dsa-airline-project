@@ -63,8 +63,8 @@ body {
 /* ===== Layout ===== */
 .container {
     display: flex;
-    flex-direction: row; 
-    align-items: flex-start;
+    flex-direction: column; 
+    align-items: stretch;
     padding: 30px;
     gap: 30px;
     max-width: 1500px;
@@ -76,9 +76,7 @@ body {
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    flex: 0 0 400px;
-    max-height: 85vh;
-    overflow-y: auto;
+    width: 100%;
 }
 
 .input-card h2 {
@@ -96,14 +94,16 @@ body {
 
 .input-row {
     display: flex;
-    flex-direction: column; 
+    flex-direction: row; 
     gap: 20px;
     margin-bottom: 20px;
+    align-items: flex-end;
 }
 
 .input-item {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 label {
@@ -221,8 +221,10 @@ input[type="text"]:focus, select:focus {
 }
 
 .map-card {
-    flex: 1; 
-    height: 700px; 
+    width: 100%;
+    height: 700px;
+    min-height: 700px;
+    flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
