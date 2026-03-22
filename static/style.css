@@ -140,6 +140,7 @@ input[list]::-webkit-calendar-picker-indicator {
 .panel .input-item {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 .panel .input-row {
