@@ -140,7 +140,6 @@ input[list]::-webkit-calendar-picker-indicator {
 .panel .input-item {
     display: flex;
     flex-direction: column;
-    flex: 1;
 }
 
 .panel .input-row {
@@ -597,6 +596,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -605,6 +605,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -618,6 +619,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -626,6 +628,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -639,6 +642,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -647,6 +651,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -660,6 +665,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -668,6 +674,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -681,6 +688,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -689,6 +697,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -702,6 +711,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -710,6 +720,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -723,6 +734,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -731,6 +743,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -744,6 +757,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -752,6 +766,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -765,6 +780,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -773,6 +789,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -786,6 +803,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -794,6 +812,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -811,6 +830,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -819,6 +839,7 @@ input[list]::-webkit-calendar-picker-indicator {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    background-clip: text, border-box;
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
 }
@@ -995,7 +1016,7 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 .level-3 .bfs-airport-list span {
-    background: rgb(3168, 85, 247, 0.2);
+    background: rgb(168, 85, 247, 0.2);
     color: rgb(168, 85, 247);
 }
 

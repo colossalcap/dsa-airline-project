@@ -7,22 +7,19 @@ let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
 let activePanel = 'optimal'; // Tracks the currently active tab
 
-// ===== FADE OUT ANIMATION UTILITY (FIXED & BULLETPROOF) =====
+// ===== FADE OUT ANIMATION UTILITY =====
 function fadeOutAndRemove(layer) {
     if (!layer) return;
 
     try {
-        // Safe access for vector layers (lines, circles)
         if (typeof layer.getElement === 'function') {
             const el = layer.getElement();
             if (el && el.classList) el.classList.add('fade-out-layer');
         }
 
-        // Safe access for standard HTML markers
         if (layer._icon && layer._icon.classList) layer._icon.classList.add('fade-out-layer');
         if (layer._shadow && layer._shadow.classList) layer._shadow.classList.add('fade-out-layer');
 
-        // Safe access for grouped layers like AntPath
         if (typeof layer.eachLayer === 'function') {
             layer.eachLayer(subLayer => {
                 if (typeof subLayer.getElement === 'function') {
@@ -35,7 +32,6 @@ function fadeOutAndRemove(layer) {
         console.warn("Could not apply fade animation, layer will be removed normally.", e);
     }
 
-    // Wait 300ms for CSS to finish fading, then permanently remove it
     setTimeout(() => {
         if (map && map.hasLayer(layer)) {
             map.removeLayer(layer);
@@ -157,9 +153,22 @@ window.clearAllInputs = function () {
     document.getElementById('altEnd').value = '';
     document.getElementById('bfsStart').value = '';
 
+    document.querySelectorAll('.multi-city-input').forEach(input => input.value = '');
+
+    // Baseline reset: drop any dynamically added stops past the initial 3
+    const mcContainer = document.getElementById('multiCityInputsContainer');
+    if (mcContainer) {
+        const items = mcContainer.querySelectorAll('.input-item');
+        for (let i = 3; i < items.length; i++) {
+            items[i].remove();
+        }
+    }
+
     document.getElementById('resultCard').style.display = 'none';
     document.getElementById('altResultArea').style.display = 'none';
     document.getElementById('bfsResultArea').style.display = 'none';
+    const mcArea = document.getElementById('multiCityResultArea');
+    if (mcArea) mcArea.style.display = 'none';
 
     const bars = document.querySelectorAll('.loading-bar');
     bars.forEach(bar => {
@@ -171,6 +180,7 @@ window.clearAllInputs = function () {
     hideError();
     if (typeof hideAltError === 'function') hideAltError();
     if (typeof hideBfsError === 'function') hideBfsError();
+    if (typeof hideMultiCityError === 'function') hideMultiCityError();
 
     clearMap();
     resetRouteDisplay();
@@ -274,8 +284,20 @@ function handleMapClick(e) {
                 ${optionsHtml}
             </select>
             <div style="display:flex; gap:10px; justify-content:center;">
+    `;
+
+    if (activePanel === 'multicity') {
+        popupContent += `
+                <button onclick="setMapSelection('multiCity')" style="background:#10b981; color:white; font-weight:bold; border:none; padding:8px; border-radius:4px; cursor:pointer; flex:1;">Add Stop</button>
+        `;
+    } else {
+        popupContent += `
                 <button onclick="setMapSelection('startAirport')" style="background:#001A4D; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; flex:1;">Set From</button>
                 <button onclick="setMapSelection('endAirport')" style="background:#FFB81C; color:#001A4D; font-weight:bold; border:none; padding:8px; border-radius:4px; cursor:pointer; flex:1;">Set To</button>
+        `;
+    }
+
+    popupContent += `
             </div>
         </div>
     `;
@@ -295,6 +317,31 @@ window.setMapSelection = function (inputId) {
     const selectedText = selectedOption.value;
     const lat = parseFloat(selectedOption.getAttribute('data-lat'));
     const lng = parseFloat(selectedOption.getAttribute('data-lng'));
+
+    if (inputId === 'multiCity') {
+        const inputs = document.querySelectorAll('.multi-city-input');
+        let filled = false;
+        for (let i = 0; i < inputs.length; i++) {
+            if (!inputs[i].value.trim()) {
+                inputs[i].value = selectedText;
+                filled = true;
+                break;
+            }
+        }
+        
+        // Dynamic auto-expansion if all boxes are currently filled!
+        if (!filled) {
+            if (inputs.length >= 8) {
+                alert("Maximum 8 stops allowed.");
+            } else {
+                window.addMultiCityStop();
+                const newInputs = document.querySelectorAll('.multi-city-input');
+                newInputs[newInputs.length - 1].value = selectedText;
+            }
+        }
+        map.closePopup();
+        return;
+    }
 
     if (activePanel === 'optimal') {
         document.getElementById(inputId).value = selectedText;
@@ -328,7 +375,7 @@ function extractIATA(str) {
 
 function extractAirportName(str) {
     const parts = str.split(") - ");
-    return parts[1];
+    return parts[1] || str;
 }
 
 // ===================================================================
@@ -374,7 +421,6 @@ async function queryShortestRoute() {
 
     } catch (err) {
         hideLoading('optimal');
-        // Show the actual error message now instead of generic text
         showError(`Script Error: ${err.message}`);
         console.error(err);
     }
@@ -389,7 +435,7 @@ function generateDynamicTabs() {
         'connections': 'fewest'
     };
 
-    for (const crit of ['price', 'time',  'distance', 'connections']) {
+    for (const crit of ['price', 'time', 'distance', 'connections']) {
         const route = currentRoutesData[crit];
         if (!route) continue;
         const pathStr = route.path.join(',');
@@ -407,7 +453,7 @@ function generateDynamicTabs() {
     const pathKeys = Object.keys(uniquePaths);
 
     if (pathKeys.length === 1) {
-        bestBadge.style.display = 'block';
+        if (bestBadge) bestBadge.style.display = 'block';
         const singlePath = uniquePaths[pathKeys[0]];
         createRouteCard(singlePath, 'Best Route', allRoutesContainer, criteriaNames);
     } else {
@@ -443,10 +489,8 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
 
     const cardClasses = ['result-card'].concat(pathData.criterias.map(c => criteriaNames[c])).join(' ');
 
-    // 构建卡片HTML结构
     const cardHTML = `
         <div class="${cardClasses}">
-
             <div class="first">
                 <div class="title">${cardTitle}</div>
                 <div class="type">${typeHTML}</div>
@@ -459,7 +503,7 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
             </div>
 
             <div class="third">
-                <div class="price">$${routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="price">$${routeData.total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div class="distance">${routeData.total_distance.toLocaleString()} km</div>
             </div>
             
@@ -471,13 +515,13 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
 
     const cardElement = container.lastElementChild;
     const showMapBtn = cardElement.querySelector('.showRoute');
-    
+
     showMapBtn.addEventListener('click', () => {
         if (routeLine) fadeOutAndRemove(routeLine);
         markers.forEach(fadeOutAndRemove);
         markers = [];
         renderMap(routeData);
-        
+
         document.querySelectorAll('.result-card').forEach(card => {
             card.classList.remove('selected');
         });
@@ -489,22 +533,30 @@ function renderMap(data) {
     const { path, path_names, coords } = data;
     const latlngs = [];
 
+    let stopNumber = 1;
+
     path.forEach((iata, index) => {
         const fullName = path_names[index];
         const [lat, lng] = coords[iata];
         latlngs.push([lat, lng]);
 
+        const isRequested = data.requested_stops && data.requested_stops.includes(iata);
+
         let markerHtml = '';
         let popupText = '';
 
-        if (index === 0) {
-            markerHtml = `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`;
-            popupText = `<b>${fullName}</b><br>Departure Airport`;
-        } else if (index === path.length - 1) {
-            markerHtml = `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`;
-            popupText = `<b>${fullName}</b><br>Arrival Airport`;
+        if (isRequested || index === 0 || index === path.length - 1) {
+            // Numbered Requested Stops
+            let bg = '#3b82f6'; // Blue for middle stops
+            if (index === 0) bg = '#22c55e'; // Green for start
+            else if (index === path.length - 1) bg = '#ef4444'; // Red for end
+            
+            markerHtml = `<div class="premium-marker" style="background: ${bg}; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:16px; margin-top:-17px; margin-left:-17px;">${stopNumber}</div>`;
+            popupText = `<b>${fullName}</b><br>Itinerary Stop ${stopNumber}`;
+            stopNumber++;
         } else {
-            markerHtml = `<div class="marker-layover"><i class="fa fa-map-marker"></i></div>`;
+            // Minimalist Layover Dots
+            markerHtml = `<div style="background: white; border: 3px solid #f97316; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top:-7px; margin-left:-7px;"></div>`;
             popupText = `<b>${fullName}</b><br>Layover`;
         }
 
@@ -530,7 +582,7 @@ function renderMap(data) {
         routeLine = L.polyline(latlngs, { color: '#00E5FF', weight: 4 }).addTo(map);
     }
 
-    routeLine.bindPopup(`<b>Optimal Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
+    routeLine.bindPopup(`<b>Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
     map.fitBounds(latlngs, { padding: [50, 50] });
 }
 
@@ -542,13 +594,17 @@ let altRoutesData = [];
 
 function showAltError(msg) {
     const el = document.getElementById('altErrorMsg');
-    el.innerText = msg;
-    el.style.display = 'block';
-    document.getElementById('altResultArea').style.display = 'none';
+    if (el) {
+        el.innerText = msg;
+        el.style.display = 'block';
+    }
+    const area = document.getElementById('altResultArea');
+    if (area) area.style.display = 'none';
 }
 
 function hideAltError() {
-    document.getElementById('altErrorMsg').style.display = 'none';
+    const el = document.getElementById('altErrorMsg');
+    if (el) el.style.display = 'none';
 }
 
 async function queryAlternativeRoutes() {
@@ -567,7 +623,7 @@ async function queryAlternativeRoutes() {
     const start = extractIATA(startRaw);
     const end = extractIATA(endRaw);
 
-    showLoading('alt', `Running DFS with Backtracking: ${start} → ${end} (max ${maxConn} flights) ...`);
+    showLoading('alt', `Running Yen's Algorithm: ${start} → ${end} ...`);
     document.getElementById('altResultArea').style.display = 'none';
 
     try {
@@ -590,7 +646,6 @@ async function queryAlternativeRoutes() {
         document.getElementById('altSummary').innerHTML =
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
-        // document.getElementById('altSortSelect').value = 'cheapest';
         renderAltRoutesList();
 
         if (altRoutesData.length > 0) {
@@ -605,7 +660,6 @@ async function queryAlternativeRoutes() {
 }
 
 window.sortAltRoutes = function (value, element) {
-
     const buttons = document.querySelectorAll('.alt-sort-controls .tab-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
 
@@ -700,13 +754,17 @@ window.queryAlternativeRoutes = queryAlternativeRoutes;
 // ===================================================================
 function showBfsError(msg) {
     const el = document.getElementById('bfsErrorMsg');
-    el.innerText = msg;
-    el.style.display = 'block';
-    document.getElementById('bfsResultArea').style.display = 'none';
+    if (el) {
+        el.innerText = msg;
+        el.style.display = 'block';
+    }
+    const area = document.getElementById('bfsResultArea');
+    if (area) area.style.display = 'none';
 }
 
 function hideBfsError() {
-    document.getElementById('bfsErrorMsg').style.display = 'none';
+    const el = document.getElementById('bfsErrorMsg');
+    if (el) el.style.display = 'none';
 }
 
 const BFS_COLORS = {
@@ -782,8 +840,8 @@ function renderBfsLevels(reachable) {
     };
 
     for (const level of Object.keys(reachable).sort()) {
-        // Make button appear
-        document.querySelector(`.bfsControls .level-${level}`).style.display = "block";
+        const controlBtn = document.querySelector(`.bfsControls .level-${level}`);
+        if (controlBtn) controlBtn.style.display = "block";
 
         const airports = reachable[level];
         const group = document.createElement('div');
@@ -874,3 +932,109 @@ function switchLevel(btn) {
 }
 
 window.queryReachability = queryReachability;
+
+// ===================================================================
+// PANEL 4: MULTI-CITY PLANNER
+// ===================================================================
+function showMultiCityError(msg) {
+    const el = document.getElementById('multiCityErrorMsg');
+    if (el) {
+        el.innerText = msg;
+        el.style.display = 'block';
+    } else {
+        alert(msg);
+    }
+}
+
+function hideMultiCityError() {
+    const el = document.getElementById('multiCityErrorMsg');
+    if (el) el.style.display = 'none';
+}
+
+window.addMultiCityStop = function() {
+    const container = document.getElementById('multiCityInputsContainer');
+    const stopCount = container.querySelectorAll('.input-item').length + 1;
+    
+    if (stopCount > 8) {
+        showMultiCityError("Maximum 8 stops allowed.");
+        return;
+    }
+    
+    const div = document.createElement('div');
+    div.className = 'input-item';
+    div.style.width = '100%';
+    div.innerHTML = `
+        <label>Stop ${stopCount} (Optional)</label>
+        <div class="list">
+            <i class="fa fa-map-marker"></i>
+            <input type="text" class="multi-city-input" list="airportList" autocomplete="off" placeholder="City or Airport">
+            <i class="fa fa-chevron-down"></i>
+        </div>
+    `;
+    container.appendChild(div);
+};
+
+async function queryMultiCity() {
+    hideMultiCityError();
+    clearMap();
+
+    const inputs = document.querySelectorAll('.multi-city-input');
+    const itinerary = [];
+
+    inputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) {
+            itinerary.push(extractIATA(val));
+        }
+    });
+
+    if (itinerary.length < 2) {
+        showMultiCityError("Please enter at least 2 valid airports.");
+        return;
+    }
+
+    showLoading('multicity', `Planning multi-city route for ${itinerary.length} stops...`);
+
+    try {
+        const res = await fetch('/api/multi_city', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itinerary })
+        });
+        const data = await res.json();
+
+        hideLoading('multicity');
+
+        if (data.code === 0) {
+            showMultiCityError(data.msg);
+            return;
+        }
+
+        renderMap(data.route);
+
+        const area = document.getElementById('multiCityResultArea');
+        if (area) {
+            const { path, total_time, total_distance, total_price } = data.route;
+            const hour = Math.floor(total_time / 60);
+            const min = total_time % 60;
+            
+            area.innerHTML = `
+                <div class="summary" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 10px;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
+                    <div style="margin-bottom: 8px; font-size: 14px;"><b>Path:</b><br/> ${path.join(' <i class="fa fa-arrow-right" style="color: #94a3b8; font-size: 12px; margin: 0 4px;"></i> ')}</div>
+                    <div style="margin-bottom: 5px; font-size: 14px;"><b>Total Price:</b> <span style="color: #059669; font-weight: 800; font-size: 16px;">$${total_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits:2})}</span></div>
+                    <div style="margin-bottom: 5px; font-size: 14px;"><b>Flight Distance:</b> ${total_distance.toLocaleString()} km</div>
+                    <div style="font-size: 14px;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
+                </div>
+            `;
+            area.style.display = 'block';
+        }
+
+    } catch (err) {
+        hideLoading('multicity');
+        showMultiCityError(`Script Error: ${err.message}`);
+        console.error(err);
+    }
+}
+
+window.queryMultiCity = queryMultiCity;
