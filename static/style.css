@@ -2,175 +2,237 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-body {
-    background-color: #f4f5f9; 
-    color: #333;
+button {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    background: #1B67F6;
+    color: white;
+}
+
+button i {
+    margin-right: 8px;
+}
+
+button:hover {
+    background: #0645C5;
+}
+
+button.active {
+    background: #0439A4;
+}
+
+.summary {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1b65f885 0%, #00968985 100%);
+    border-radius: 12px;
+    font-weight: 600;
+    color: #001A4D;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #bbdefb;
+}
+
+input[list]::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
+
+/* Header */
+.header,
+.header .title,
+.header .assist,
+.header .assist .features {
+    display: flex;
 }
 
 .header {
-    background-color: #001A4D; 
-    color: white;
-    padding: 20px 40px;
-    text-align: left;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.header h1 {
-    font-size: 24px;
-    font-weight: 300;
-    letter-spacing: 1px;
-}
-
-/* ===== Header Navigation ===== */
-.header-nav {
-    display: flex;
-    gap: 6px;
-}
-
-.nav-btn {
-    padding: 9px 18px;
-    border: 1.5px solid rgba(255,255,255,0.25);
-    background: transparent;
-    color: rgba(255,255,255,0.7);
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    letter-spacing: 0.3px;
-}
-
-.nav-btn:hover {
-    background: rgba(255,255,255,0.1);
-    color: white;
-    border-color: rgba(255,255,255,0.5);
-}
-
-.nav-btn.active {
-    background: #FFB81C;
-    color: #001A4D;
-    border-color: #FFB81C;
-}
-
-/* ===== Layout ===== */
-.container {
-    display: flex;
-    flex-direction: column; 
-    align-items: stretch;
-    padding: 30px;
-    gap: 30px;
-    max-width: 1500px;
-    margin: 0 auto;
-}
-
-.input-card {
+    position: relative;
+    z-index: 20;
     background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    justify-content: space-between;
+    padding: 12px 24px;
+    box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.header .title .circle {
+    background: #0A66C2;
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+    align-content: center;
+}
+
+.header .title .circle .fa {
+    color: white;
+    font-size: 20px;
+    margin: 3px 0 0 12px;
+}
+
+.header .title p {
+    color: #0A66C2;
+    margin-left: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    align-content: center;
+}
+
+.header .assist .features {
+    align-items: center;
+    gap: 12px;
+}
+
+/* Background Map */
+.map-card #map {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
+    z-index: 0;
 }
 
-.input-card h2 {
-    color: #001A4D;
-    margin-bottom: 10px;
-    font-weight: 500;
+.leaflet-top {
+    position: absolute;
+    top: 10%;
 }
 
-.feature-desc {
-    font-size: 13.5px;
-    color: #666;
-    margin-bottom: 20px;
-    line-height: 1.5;
+/* Panel */
+.panel {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    width: 380px;
+    max-width: calc(100% - 40px);
+    max-height: calc(100% - 100px);
+    z-index: 10;
+    overflow-y: auto;
+    transform: translateX(0);
+    transition: transform 0.5s ease, right 0.5s ease;
+    background: white;
+    border-radius: 24px;
+    padding: 24px   ;
 }
 
-.input-row {
-    display: flex;
-    flex-direction: row; 
-    gap: 20px;
-    margin-bottom: 20px;
-    align-items: flex-end;
+/* Panel - Title */
+.panel .title p:first-child {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
-.input-item {
+.panel .title p:first-child i {
+    margin-right: 8px;
+    color: #1B67F6;
+}
+
+.panel .title p:last-child {
+    font-size: 14px;
+    color: #4B5563;
+}
+
+/* Panel - Dropdown */
+.panel .input-item {
     display: flex;
     flex-direction: column;
     flex: 1;
 }
 
-label {
-    font-size: 13px;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 8px;
-    text-transform: uppercase;
+.panel .input-row {
+    margin-top: 24px;
 }
 
-input[type="text"], select {
-    padding: 12px 15px;
-    font-size: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    outline: none;
-    transition: border-color 0.3s ease;
+.panel .input-row label {
+    color: rgb(55 65 81);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.panel .input-item .list {
+    margin-top: 6px;
+    position: relative;
+}
+
+.panel .input-item input,
+.panel .input-item select {
+    -webkit-appearance: none;
+    appearance: none;
     width: 100%;
+    padding: 12px 45px 12px 40px;
+    border-radius: 8px;
+    border: 1px solid rgb(187 190 195);
+    margin-bottom: 20px;
+    font-size: 16px;
 }
 
-input[type="text"]:focus, select:focus {
-    border-color: #001A4D;
-    box-shadow: 0 0 5px rgba(0, 26, 77, 0.2);
+.panel .input-item input:focus-visible,
+.panel .input-item select:focus-visible {
+    box-shadow: 0px 0px 6px 4px rgb(10 102 194/0.3);
+    outline: none;
+}
+
+.panel .input-item .fa {
+    color: rgb(156 163 175);
+}
+
+.panel .input-item .fa:first-child {
+    position: absolute;
+    top: 24%;
+    left: 5%;
+}
+
+.panel .input-item .fa:last-child {
+    position: absolute;
+    top: 22%;
+    right: 17px;
 }
 
 /* ===== Action Row & Clear Button ===== */
-.action-row {
+.panel .action-row {
     display: flex;
     gap: 10px;
     width: 100%;
 }
 
-.search-btn {
+.panel .search-btn {
     width: 100%;
-    padding: 15px;
+    height: 48px;
+    padding: 12px 24px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 500;
     color: #001A4D;
-    background-color: #FFB81C; 
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    background-color: #FFB81C;
+    border-radius: 12px;
     transition: background-color 0.3s ease;
+    animation: pulse 3s infinite;
 }
 
 .search-btn:hover {
     background-color: #e5a417;
 }
 
+.panel .search-btn .fa {
+    margin-right: 10px;
+}
+
 .clear-btn {
+    min-width: 105px;
     background-color: #ffebee;
     color: #d32f2f;
     border: 1px solid #ffcdd2;
-    padding: 0 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: bold;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
     transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
 }
 
 .clear-btn .trash-icon {
-    display: inline-block;
     font-size: 16px;
 }
 
@@ -184,83 +246,167 @@ input[type="text"]:focus, select:focus {
     animation: wiggle 0.4s ease-in-out;
 }
 
-@keyframes wiggle {
-    0% { transform: rotate(0deg); }
-    25% { transform: rotate(-15deg) scale(1.1); }
-    50% { transform: rotate(10deg) scale(1.1); }
-    75% { transform: rotate(-5deg) scale(1.1); }
-    100% { transform: rotate(0deg) scale(1); }
+@keyframes pulse {
+    0% {transform: scale(1);}
+    50% {transform: scale(1.05);}
+    100% {transform: scale(1);}
 }
 
+@keyframes wiggle {
+    0% {transform: rotate(0deg);}
+    25% {transform: rotate(-15deg) scale(1.1);}
+    50% {transform: rotate(10deg) scale(1.1);}
+    75% {transform: rotate(-5deg) scale(1.1);}
+    100% {transform: rotate(0deg) scale(1);}
+}
+
+/* Panel - Error Msg */
 .error-msg {
     color: #D32F2F;
     background-color: #FFEBEE;
     padding: 10px;
-    border-radius: 4px;
+    border-radius: 8px;
     margin-top: 15px;
     display: none;
     text-align: center;
-}
-
-.result {
-    margin-top: 25px;
-    padding: 20px;
-    background-color: #f8f9fc;
-    border-left: 4px solid #FFB81C;
-    border-radius: 4px;
-}
-
-.result h4 {
-    color: #001A4D;
-    margin-bottom: 15px;
-}
-
-.result p {
-    margin-bottom: 8px;
     font-size: 15px;
+    font-weight: 600;
 }
 
-.map-card {
+.error-msg::before {
+    content: "\f071";
+    margin-right: 8px;
+    font-family: 'FontAwesome';
+}
+
+/* Panel - Loading Bar */
+.loading-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #e3f2fd;
+    border-radius: 12px;
+    border: 1px solid #bbdefb;
+    animation: loadingFadeIn 0.3s ease;
+}
+
+@keyframes loadingFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loading-bar-track {
     width: 100%;
-    height: 700px;
-    min-height: 700px;
-    flex-shrink: 0;
-    border-radius: 8px;
+    height: 6px;
+    background: #d1d9e6;
+    border-radius: 3px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-#map {
-    width: 100%;
+.loading-bar-fill {
+    width: 40%;
     height: 100%;
+    background: linear-gradient(90deg, #1B65F8, #009689);
+    background-size: 200% 100%;
+    border-radius: 3px;
+    animation: loadingSlide 1.4s ease-in-out infinite;
+}
+
+@keyframes loadingSlide {
+    0% {
+        transform: translateX(-100%);
+        background-position: 0% 0%;
+    }
+
+    50% {
+        background-position: 100% 0%;
+    }
+
+    100% {
+        transform: translateX(350%);
+        background-position: 0% 0%;
+    }
+}
+
+.loading-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #001A4D;
+    letter-spacing: 0.3px;
+    text-align: center;
+}
+
+/* Result Box */
+.result {
+    margin-top: 18px;
+    border-top: 1px solid #9c9d9e;
+}
+
+.panel .result > p {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 18px 0;
+}
+
+.panel .result-card {
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.panel .result-card h4 {
+    font-size: 18px;
+    font-weight: 500;
 }
 
 /* ===== Tabs ===== */
 .route-tabs {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 5px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
-.tab-btn {
-    flex: 1;
-    padding: 8px 5px;
-    background: none;
-    border: none;
-    color: #666;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
+.tab-btn{
+    background: rgb(243 244 246);
+    color: rgb(55 65 81);
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
-.tab-btn:hover { background-color: #f0f0f0; }
+.tab-btn:hover,
 .tab-btn.active {
-    background-color: #001A4D;
-    color: #FFB81C;
+    color: white;
+}
+
+/* Result Card */
+.panel .result-card .first,
+.panel .result-card .third {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel .result-card .first {
+    margin-bottom: 12px;
+}
+
+.panel .result-card .title {
+    font-size: 16px;
+    font-weight: 700;
+    width: 100%;
+    display: flex;
 }
 
 .best-badge {
@@ -268,15 +414,609 @@ input[type="text"]:focus, select:focus {
     color: #2e7d32;
     padding: 10px;
     border-radius: 4px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
     margin-bottom: 15px;
     text-align: center;
     border: 1px solid #c8e6c9;
 }
 
+.panel .second {
+    font-size: 12px;
+    color: rgb(107 114 128);
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.panel .second .path::after {
+    content: "|";
+    margin: 0 6px;
+}
+
+.panel .second .stops::after {
+    content: "•";
+    margin: 0 6px;
+}
+
+.panel .third .price::before {
+    content: "Price: ";
+    font-size: 12px;
+    color: rgb(107 114 128);
+}
+
+.panel .third .distance::before {
+    content: "Distance: ";
+    font-size: 12px;
+    color: rgb(107 114 128);
+}
+
+.panel .third .price,
+.panel .third .distance {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.result-card {
+    margin-bottom: 16px;
+    background: white;
+    position: relative; 
+    overflow: hidden;
+    border: none;
+    padding-left: 16px;
+}
+
+.result-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+}
+
+.result-card:last-child {
+    margin: 0;
+}
+
+.result-card.selected {
+  background: rgb(243 244 246);
+  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.panel .result-card .type {
+    display: flex;
+    gap: 4px;
+    width: 120%;
+    justify-content: end;
+}
+
+.panel .result-card .type > div::before {
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+}
+
+.panel .result-card .showRoute {
+    height: 36px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 0;
+    background: rgb(27, 103, 246, 0.1);
+    color: rgb(27, 103, 246);
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 12px;
+    cursor: pointer;
+    display: inline-block;
+    width: 100%;
+}
+
+.panel .result-card .showRoute:hover {
+    background: rgb(27, 103, 246, 0.2)
+}
+
+/* Result card - Type Cheapest */
+.panel .result-card.cheapest::before {
+   background: rgb(34, 197, 94);
+}
+
+.panel .result-card.cheapest .type .cheapest::before {
+    content: "Cheapest";
+    background: rgb(34, 197, 94, 0.1);
+    color: rgb(34, 197, 94);
+}
+
+.panel .result-card.cheapest .showRoute {
+    background: rgb(34, 197, 94, 0.1);
+    color: rgb(34, 197, 94);
+}
+
+.panel .result-card.cheapest .showRoute:hover {
+    background: rgb(34, 197, 94, 0.2);
+}
+
+/* Result card - Type Fastest */
+.panel .result-card.fastest::before {
+    background: rgb(168, 85, 247);
+}
+
+.panel .result-card.fastest .type .fastest::before {
+    content: "Fastest";
+    background: rgb(168, 85, 247, 0.1);
+    color: rgb(168, 85, 247);
+}
+
+.panel .result-card.fastest .showRoute {
+    background: rgb(168, 85, 247, 0.1);
+    color: rgb(168, 85, 247);
+}
+
+.panel .result-card.fastest .showRoute:hover {
+    background: rgb(168, 85, 247, 0.2);
+}
+
+/* Result card - Type Shortest */
+.panel .result-card.shortest::before {
+    background: rgb(255, 107, 0);
+}
+
+.panel .result-card.shortest .type .shortest::before {
+    content: "Shortest";
+    background: rgb(255, 107, 0, 0.1);
+    color: rgb(255, 107, 0);
+}
+
+.panel .result-card.shortest .showRoute {
+    background: rgb(255, 107, 0, 0.1);
+    color: rgb(255, 107, 0);
+}
+
+.panel .result-card.shortest .showRoute:hover {
+    background: rgb(255, 107, 0, 0.2);
+}
+
+/* Result card - Type Fewest */
+.panel .result-card.fewest::before {
+    background: rgb(27, 103, 246);
+}
+
+.panel .result-card.fewest .type .fewest::before {
+    content: "Fewer Stops";
+    background: rgb(27, 103, 246, 0.1);
+    color: rgb(27, 103, 246);
+}
+
+/* Result card - Type Cheapest & Fastest */
+.panel .result-card.cheapest.fastest::before{
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247));
+}
+
+.panel .result-card.cheapest.fastest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.fastest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Shortest */
+.panel .result-card.cheapest.shortest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0));
+}
+
+.panel .result-card.cheapest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fewest */
+.panel .result-card.cheapest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(27, 103, 246));
+}
+
+.panel .result-card.cheapest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Shortest */
+.panel .result-card.fastest.shortest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0));
+}
+
+.panel .result-card.fastest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.fastest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Fewest */
+.panel .result-card.fastest.fewest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(27, 103, 246));
+}
+
+.panel .result-card.fastest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.fastest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Shortest & Fewest */
+.panel .result-card.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.panel .result-card.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Shortest */
+.panel .result-card.cheapest.fastest.shortest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0));
+}
+
+.panel .result-card.cheapest.fastest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.fastest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Fewest */
+.panel .result-card.cheapest.fastest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246));
+}
+
+.panel .result-card.cheapest.fastest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.fastest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Shortest & Fewest */
+.panel .result-card.cheapest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.panel .result-card.cheapest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Shortest & Fewest */
+.panel .result-card.fastest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.panel .result-card.fastest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.fastest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Shortest & Fewest */
+.panel .result-card.cheapest.fastest.shortest.fewest .type{
+    flex-wrap: wrap;
+}
+
+.panel .result-card.cheapest.fastest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.panel .result-card.cheapest.fastest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.panel .result-card.cheapest.fastest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ===== FEATURE 1: Alternative Routes (DFS) ===== */
+#altResultArea,
+#bfsResultArea {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #9c9d9e;
+}
+
+.alt-sort-controls > p {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+#altResultArea > p,
+#bfsResultArea > p{
+    margin: 18px 0;
+    padding-top: 18px;
+    border-top: 1px solid #9c9d9e;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ===== FEATURE 2: Reachability Map (BFS) ===== */
+#bfsResultArea > p i {
+    color: rgb(27, 103, 246);
+    margin-right: 8px;
+}
+
+.bfsControls {
+    display: flex;
+    color: rgb(107 114 128);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.bfsControls > div {
+    border-bottom: 2px solid rgb(0, 0, 0, 0.2);
+    padding: 8px 0;
+    cursor: pointer;
+    text-align: center;
+    width: stretch;
+    display: none;
+}
+
+.bfsControls .level-1:hover {
+    border-color: rgb(27, 103, 246, 0.5);
+    color: rgb(27, 103, 246);
+}
+
+.bfsControls .level-1.selected {
+    border-color: rgb(27, 103, 246);
+    color: rgb(27, 103, 246);
+}
+
+.bfsControls .level-2:hover {
+    border-color: rgb(34, 197, 94, 0.5);
+    color: rgb(34, 197, 94);
+}
+
+.bfsControls .level-2.selected {
+    border-color: rgb(34, 197, 94);
+    color: rgb(34, 197, 94);
+}
+
+.bfsControls .level-3:hover {
+    border-color: rgb(168, 85, 247, 0.5);
+    color: rgb(168, 85, 247);
+}
+
+.bfsControls .level-3.selected {
+    border-color: rgb(168, 85, 247);
+    color: rgb(168, 85, 247);
+}
+
+.bfsControls .level-4:hover {
+    border-color: rgb(255, 107, 0, 0.5);
+    color: rgb(255, 107, 0);
+}
+
+.bfsControls .level-4.selected {
+    border-color: rgb(255, 107, 0);
+    color: rgb(255, 107, 0);
+}
+
+.bfsGroup:not(:first-child) {
+    display: none;
+}
+
+.bfsGroup .title {
+    color: rgb(75 85 99);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.bfsGroup .title span {
+    font-weight: 600;
+}
+
+.bfsGroup .title::before {
+    font-family: 'FontAwesome';
+    margin-right: 4px;
+}
+
+.bfs-airport-list {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.bfs-airport-list span {
+    border-radius: 50px;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+}
+
+.bfsGroup .total {
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgb(107 114 128);
+    text-align: center;
+}
+
+/* Level 1 */
+.level-1 .title::before {
+    content: '\f058';
+    color: rgb(27, 103, 246);
+}
+
+.level-1 .title span {
+    color: rgb(27, 103, 246);
+}
+
+.level-1 .bfs-airport-list span {
+    background: rgb(27, 103, 246, 0.2);
+    color: rgb(27, 103, 246);
+}
+
+/* Level 2 */
+.level-2 .title::before {
+    content: '\f058';
+    color: rgb(34, 197, 94);
+}
+
+.level-2 .title span {
+    color: rgb(34, 197, 94);
+}
+
+.level-2 .bfs-airport-list span {
+    background: rgb(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+/* Level 3 */
+.level-3 .title::before {
+    content: '\f058';
+    color: rgb(168, 85, 247);
+}
+
+.level-3 .title span {
+    color: rgb(168, 85, 247);
+}
+
+.level-3 .bfs-airport-list span {
+    background: rgb(3168, 85, 247, 0.2);
+    color: rgb(168, 85, 247);
+}
+
+/* Level 4 */
+.level-4 .title::before {
+    content: '\f058';
+    color: rgb(255, 107, 0);
+}
+
+.level-4 .title span {
+    color: rgb(255, 107, 0);
+}
+
+.level-4 .bfs-airport-list span {
+    background: rgb(255, 107, 0, 0.2);
+    color: rgb(255, 107, 0);
+}
+
 /* ===== Fading Animations for Map Elements ===== */
-.premium-marker, path.leaflet-interactive {
+.premium-marker,
+path.leaflet-interactive {
     transition: opacity 0.3s ease-out !important;
 }
 
@@ -292,162 +1032,39 @@ input[type="text"]:focus, select:focus {
     border-radius: 50%;
     border: 2px solid white;
     font-size: 16px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
+
 .marker-start {
-    background: #FF5722; 
+    height: 36px;
+    width: 36px;
+    background: rgb(27, 103, 246);
     color: white;
 }
+
+.marker-start .fa {
+    margin-top: 3px;
+}
+
 .marker-end {
-    background: #00E676;
+    height: 36px;
+    width: 36px;
+    background: rgb(34, 197, 94);
     color: white;
 }
+
+.marker-end .fa {
+    transform: rotate(80deg);
+}
+
 .marker-layover {
-    background: #2979FF;
-    color: white;
-    font-size: 10px;
+    height: 35px;
+    width: 35px;
+    color: rgb(255, 107, 0);
+    font-size: 32px;
     font-weight: bold;
-}
-
-/* ===== FEATURE 1: Alternative Routes (DFS) ===== */
-.alt-summary {
-    margin-top: 20px;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border-radius: 6px;
-    font-weight: 600;
-    color: #001A4D;
-    font-size: 14px;
-    text-align: center;
-    border: 1px solid #bbdefb;
-}
-
-.alt-routes-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.alt-route-card {
-    padding: 14px 16px;
-    background: #f8f9fc;
-    border-left: 4px solid #7c4dff;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
     position: relative;
-}
-
-.alt-route-card:hover {
-    background: #ede7f6;
-    transform: translateX(3px);
-}
-
-.alt-route-card.selected {
-    background: #ede7f6;
-    border-left-color: #FFB81C;
-    box-shadow: 0 2px 8px rgba(124, 77, 255, 0.15);
-}
-
-.alt-route-card .route-number {
-    font-size: 11px;
-    font-weight: 700;
-    color: #7c4dff;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
-}
-
-.alt-route-card .route-path {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 6px;
-}
-
-.alt-route-card .route-stats {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.alt-route-card .route-stats span {
-    font-size: 12px;
-    color: #666;
-    background: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid #e0e0e0;
-}
-
-/* ===== FEATURE 2: Reachability Map (BFS) ===== */
-.bfs-summary {
-    margin-top: 20px;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #e8f5e9 0%, #e0f2f1 100%);
-    border-radius: 6px;
-    font-weight: 600;
-    color: #1b5e20;
-    font-size: 14px;
-    text-align: center;
-    border: 1px solid #a5d6a7;
-}
-
-.bfs-level-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.bfs-level-group {
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-}
-
-.bfs-level-header {
-    padding: 10px 16px;
-    font-weight: 700;
-    font-size: 13px;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.bfs-level-header.level-1 { background: #43a047; }
-.bfs-level-header.level-2 { background: #1e88e5; }
-.bfs-level-header.level-3 { background: #8e24aa; }
-.bfs-level-header.level-4 { background: #e65100; }
-
-.bfs-airport-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 10px 14px;
-    background: #fafafa;
-}
-
-.bfs-airport-chip {
-    font-size: 12px;
-    padding: 4px 10px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    color: #444;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.bfs-airport-chip:hover {
-    background: #e8f5e9;
-    border-color: #43a047;
-    color: #2e7d32;
+    bottom: 34px;
 }
 
 /* ===== BFS Marker Colors ===== */
@@ -456,70 +1073,32 @@ input[type="text"]:focus, select:focus {
     color: #001A4D;
     font-weight: bold;
 }
-.marker-bfs-1 { background: #43a047; color: white; }
-.marker-bfs-2 { background: #1e88e5; color: white; }
-.marker-bfs-3 { background: #8e24aa; color: white; }
-.marker-bfs-4 { background: #e65100; color: white; }
 
-/* ===== Scrollbar Styling ===== */
-.alt-routes-list::-webkit-scrollbar,
-.bfs-level-list::-webkit-scrollbar,
-.input-card::-webkit-scrollbar {
-    width: 6px;
-}
-.alt-routes-list::-webkit-scrollbar-thumb,
-.bfs-level-list::-webkit-scrollbar-thumb,
-.input-card::-webkit-scrollbar-thumb {
-    background-color: #c0c0c0;
-    border-radius: 3px;
+.marker-bfs-1 {
+    background: rgb(27, 103, 246);
+    color: white;
 }
 
-/* ===== Loading Bar ===== */
-.loading-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    margin-top: 16px;
-    padding: 14px 16px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #ede7f6 100%);
-    border-radius: 6px;
-    border: 1px solid #bbdefb;
-    animation: loadingFadeIn 0.3s ease;
+.marker-bfs-2 {
+    background: rgb(34, 197, 94);
+    color: white;
 }
 
-@keyframes loadingFadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+.marker-bfs-3 {
+    background: rgb(168, 85, 247);
+    color: white;
 }
 
-.loading-bar-track {
-    width: 100%;
-    height: 6px;
-    background: #d1d9e6;
-    border-radius: 3px;
-    overflow: hidden;
+.marker-bfs-4 {
+    background: rgb(255, 107, 0);
+    color: white;
 }
 
-.loading-bar-fill {
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg, #001A4D, #FFB81C, #001A4D);
-    background-size: 200% 100%;
-    border-radius: 3px;
-    animation: loadingSlide 1.4s ease-in-out infinite;
-}
-
-@keyframes loadingSlide {
-    0%   { transform: translateX(-100%); background-position: 0% 0%; }
-    50%  { background-position: 100% 0%; }
-    100% { transform: translateX(350%);  background-position: 0% 0%; }
-}
-
-.loading-text {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #001A4D;
-    letter-spacing: 0.3px;
-    text-align: center;
+@media screen and (max-width: 780px) {
+    .header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        min-width: 560px;
+    }
 }
