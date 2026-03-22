@@ -123,11 +123,13 @@ window.switchPanel = function (panelId) {
         currentEnd = document.getElementById('endAirport').value || document.getElementById('altEnd').value;
     }
 
-    document.getElementById('startAirport').value = currentStart;
-    document.getElementById('altStart').value = currentStart;
-    document.getElementById('bfsStart').value = currentStart;
-    document.getElementById('endAirport').value = currentEnd;
-    document.getElementById('altEnd').value = currentEnd;
+    if (panelId !== 'multicity') {
+        document.getElementById('startAirport').value = currentStart;
+        document.getElementById('altStart').value = currentStart;
+        document.getElementById('bfsStart').value = currentStart;
+        document.getElementById('endAirport').value = currentEnd;
+        document.getElementById('altEnd').value = currentEnd;
+    }
 
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -141,8 +143,10 @@ window.switchPanel = function (panelId) {
     activePanel = panelId;
 
     clearMap();
-    tempStartMarker = null;
-    tempEndMarker = null;
+    if (panelId !== 'multicity') {
+        handleInputChange({ target: { value: currentStart } }, 'startAirport');
+        handleInputChange({ target: { value: currentEnd } }, 'endAirport');
+    }
 }
 
 // ===== CLEAR ALL INPUTS UTILITY =====
@@ -155,7 +159,6 @@ window.clearAllInputs = function () {
 
     document.querySelectorAll('.multi-city-input').forEach(input => input.value = '');
 
-    // Baseline reset: drop any dynamically added stops past the initial 3
     const mcContainer = document.getElementById('multiCityInputsContainer');
     if (mcContainer) {
         const items = mcContainer.querySelectorAll('.input-item');
@@ -215,7 +218,10 @@ function setupInputListeners() {
 }
 
 function handleInputChange(e, inputId) {
-    resetRouteDisplay();
+    if (activePanel === 'optimal' && document.getElementById('resultCard').style.display === 'block') {
+        // Prevent clearing map during standard typing if result is shown
+    }
+
     hideError();
 
     const val = e.target.value;
@@ -328,8 +334,7 @@ window.setMapSelection = function (inputId) {
                 break;
             }
         }
-        
-        // Dynamic auto-expansion if all boxes are currently filled!
+
         if (!filled) {
             if (inputs.length >= 8) {
                 alert("Maximum 8 stops allowed.");
@@ -377,6 +382,118 @@ function extractAirportName(str) {
     const parts = str.split(") - ");
     return parts[1] || str;
 }
+
+
+// ===================================================================
+// MASSIVE RENDER MAP UPGRADE (SOLVES OVERLAPPING / CLUTTER)
+// ===================================================================
+function renderMap(data) {
+    const { path, path_names, coords, requested_stops } = data;
+    const allLatLngs = [];
+
+    // 1. Dynamic Color Palette for Multi-City Legs
+    const legStyles = [
+        { color: '#00E5FF', pulse: '#001A4D' }, // Cyan
+        { color: '#FF00FF', pulse: '#4B0082' }, // Magenta
+        { color: '#39FF14', pulse: '#006400' }, // Neon Green
+        { color: '#FF9900', pulse: '#8B4500' }, // Orange
+        { color: '#FF0000', pulse: '#8B0000' }  // Red
+    ];
+
+    let segments = [];
+    let currentSegmentLatLngs = [];
+    let currentLegIndex = 0;
+    let stopNumber = 1;
+
+    path.forEach((iata, index) => {
+        const fullName = path_names[index];
+        const [lat, lng] = coords[iata];
+
+        let renderLat = lat;
+        let renderLng = lng;
+        if (requested_stops && currentLegIndex > 0) {
+            renderLat += (currentLegIndex * 0.03);
+            renderLng += (currentLegIndex * 0.03);
+        }
+
+        const lineLatLng = [renderLat, renderLng];
+        allLatLngs.push([lat, lng]);
+        currentSegmentLatLngs.push(lineLatLng);
+
+        const isRequested = requested_stops && requested_stops.includes(iata);
+
+        let markerHtml = '';
+        let popupText = '';
+
+        if (isRequested || index === 0 || index === path.length - 1) {
+            let bg = '#3b82f6';
+            if (index === 0) bg = '#22c55e';
+            else if (index === path.length - 1) bg = '#ef4444';
+
+            markerHtml = `<div class="premium-marker" style="background: ${bg}; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:16px; margin-top:-17px; margin-left:-17px; z-index: 1000;">${stopNumber}</div>`;
+            popupText = `<b>${fullName}</b><br>Itinerary Stop ${stopNumber}`;
+            stopNumber++;
+        } else {
+            markerHtml = `<div style="background: white; border: 3px solid #f97316; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top:-7px; margin-left:-7px;"></div>`;
+            popupText = `<b>${fullName}</b><br>Layover`;
+        }
+
+        const marker = L.marker([lat, lng], {
+            icon: L.divIcon({ html: markerHtml, className: '' })
+        }).addTo(map).bindPopup(popupText);
+
+        markers.push(marker);
+
+        if (index > 0 && requested_stops && isRequested) {
+            segments.push({
+                latlngs: [...currentSegmentLatLngs],
+                style: legStyles[currentLegIndex % legStyles.length],
+                legNumber: currentLegIndex + 1
+            });
+            currentLegIndex++;
+            currentSegmentLatLngs = [lineLatLng];
+        }
+    });
+
+    if (segments.length === 0 && currentSegmentLatLngs.length > 1) {
+        segments.push({
+            latlngs: currentSegmentLatLngs,
+            style: legStyles[0],
+            legNumber: 1
+        });
+    }
+
+    const pathLayers = [];
+
+    segments.forEach(seg => {
+        let lineLayer;
+        if (typeof L.polyline.antPath === 'function') {
+            lineLayer = L.polyline.antPath(seg.latlngs, {
+                "delay": 400,
+                "dashArray": [15, 30],
+                "weight": 5,
+                "color": seg.style.color,
+                "pulseColor": seg.style.pulse,
+                "paused": false,
+                "reverse": false,
+                "hardwareAccelerated": true
+            });
+        } else {
+            lineLayer = L.polyline(seg.latlngs, { color: seg.style.color, weight: 4 });
+        }
+
+        let popupMsg = requested_stops ?
+            `<b>Leg ${seg.legNumber}</b><br>Click markers for airport info.` :
+            `<b>Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`;
+
+        lineLayer.bindPopup(popupMsg);
+        pathLayers.push(lineLayer);
+    });
+
+    routeLine = L.layerGroup(pathLayers).addTo(map);
+    map.fitBounds(allLatLngs, { padding: [50, 50] });
+}
+
 
 // ===================================================================
 // PANEL 1: OPTIMAL ROUTE QUERY
@@ -528,64 +645,6 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
         cardElement.classList.add('selected');
     });
 }
-
-function renderMap(data) {
-    const { path, path_names, coords } = data;
-    const latlngs = [];
-
-    let stopNumber = 1;
-
-    path.forEach((iata, index) => {
-        const fullName = path_names[index];
-        const [lat, lng] = coords[iata];
-        latlngs.push([lat, lng]);
-
-        const isRequested = data.requested_stops && data.requested_stops.includes(iata);
-
-        let markerHtml = '';
-        let popupText = '';
-
-        if (isRequested || index === 0 || index === path.length - 1) {
-            // Numbered Requested Stops
-            let bg = '#3b82f6'; // Blue for middle stops
-            if (index === 0) bg = '#22c55e'; // Green for start
-            else if (index === path.length - 1) bg = '#ef4444'; // Red for end
-            
-            markerHtml = `<div class="premium-marker" style="background: ${bg}; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:16px; margin-top:-17px; margin-left:-17px;">${stopNumber}</div>`;
-            popupText = `<b>${fullName}</b><br>Itinerary Stop ${stopNumber}`;
-            stopNumber++;
-        } else {
-            // Minimalist Layover Dots
-            markerHtml = `<div style="background: white; border: 3px solid #f97316; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top:-7px; margin-left:-7px;"></div>`;
-            popupText = `<b>${fullName}</b><br>Layover`;
-        }
-
-        const marker = L.marker([lat, lng], {
-            icon: L.divIcon({ html: markerHtml, className: '' })
-        }).addTo(map).bindPopup(popupText);
-
-        markers.push(marker);
-    });
-
-    if (typeof L.polyline.antPath === 'function') {
-        routeLine = L.polyline.antPath(latlngs, {
-            "delay": 400,
-            "dashArray": [15, 30],
-            "weight": 5,
-            "color": "#00E5FF",
-            "pulseColor": "#001A4D",
-            "paused": false,
-            "reverse": false,
-            "hardwareAccelerated": true
-        }).addTo(map);
-    } else {
-        routeLine = L.polyline(latlngs, { color: '#00E5FF', weight: 4 }).addTo(map);
-    }
-
-    routeLine.bindPopup(`<b>Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
-    map.fitBounds(latlngs, { padding: [50, 50] });
-}
-
 
 // ===================================================================
 // PANEL 2: ALTERNATIVE ROUTES
@@ -750,7 +809,7 @@ window.queryAlternativeRoutes = queryAlternativeRoutes;
 
 
 // ===================================================================
-// PANEL 3: REACHABILITY MAP
+// PANEL 3: REACHABILITY MAP UPGRADED (SOLVES CHIP CLICK ISSUE)
 // ===================================================================
 function showBfsError(msg) {
     const el = document.getElementById('bfsErrorMsg');
@@ -827,6 +886,7 @@ async function queryReachability() {
     }
 }
 
+// THIS FUNCTION RECEIVED THE MAIN UPGRADE TO HANDLE CLICKS
 function renderBfsLevels(reachable) {
     const container = document.getElementById('bfsLevelList');
     const airport = extractAirportName(document.getElementById('bfsStart').value);
@@ -848,9 +908,8 @@ function renderBfsLevels(reachable) {
         group.classList.add('bfsGroup', `level-${level}`);
 
         const header = document.createElement('div');
-        const span = document.createElement('span');
         header.className = `title`;
-        header.innerHTML = `${levelLabels[level] + ' flights'} from <span>${airport}</span>`;
+        header.innerHTML = `${levelLabels[level]} flights from <span>${airport}</span>`;
         group.appendChild(header);
 
         const list = document.createElement('div');
@@ -859,13 +918,16 @@ function renderBfsLevels(reachable) {
         airports.forEach(ap => {
             const chip = document.createElement('span');
             chip.className = 'bfs-airport-chip';
+
+            // --- UI REVERT: Back to just the clean 3-letter IATA code ---
             chip.textContent = ap.iata;
-            chip.title = ap.name;
+
+            // --- UX MAINTAINED: Full name and instructions moved to hover tooltip ---
+            chip.title = `${ap.name} (Click to route)`;
+
+            // --- UX MAINTAINED: Automatic Dijkstra routing click handler ---
             chip.onclick = () => {
-                const coords = ap.coords;
-                if (coords) {
-                    map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
-                }
+                handleBfsChipClick(ap.iata, ap.name);
             };
             list.appendChild(chip);
         });
@@ -879,6 +941,33 @@ function renderBfsLevels(reachable) {
 
         container.appendChild(group);
     }
+}
+
+// New dedicated handler for smoother visual demo flow
+function handleBfsChipClick(endIata, endName) {
+    const startRaw = document.getElementById('bfsStart').value;
+    if (!startRaw) return;
+
+    // 1. Instantly wipe BFS clutter from the map for a clean transition
+    bfsMarkers.forEach(layer => map.removeLayer(layer));
+    bfsMarkers = [];
+    document.getElementById('bfsResultArea').style.display = 'none';
+
+    // 2. Clear standard temp markers before switching to avoid visual lag
+    if (tempStartMarker) map.removeLayer(tempStartMarker);
+    if (tempEndMarker) map.removeLayer(tempEndMarker);
+
+    // 3. Perform panel switch (this naturally clears markers too)
+    switchPanel('optimal');
+
+    // 4. Populate standard search fields automatically
+    // Format must match datalist: "(IATA) - Name"
+    const formattedEnd = `(${endIata}) - ${endName}`;
+    document.getElementById('startAirport').value = startRaw;
+    document.getElementById('endAirport').value = formattedEnd;
+
+    // 5. Execute standard Dijkstra search immediately
+    queryShortestRoute();
 }
 
 function renderBfsMap(data) {
@@ -934,7 +1023,7 @@ function switchLevel(btn) {
 window.queryReachability = queryReachability;
 
 // ===================================================================
-// PANEL 4: MULTI-CITY PLANNER
+// PANEL 4: MULTI-CITY PLANNER (UPGRADED UI SUMMARY)
 // ===================================================================
 function showMultiCityError(msg) {
     const el = document.getElementById('multiCityErrorMsg');
@@ -951,15 +1040,15 @@ function hideMultiCityError() {
     if (el) el.style.display = 'none';
 }
 
-window.addMultiCityStop = function() {
+window.addMultiCityStop = function () {
     const container = document.getElementById('multiCityInputsContainer');
     const stopCount = container.querySelectorAll('.input-item').length + 1;
-    
+
     if (stopCount > 8) {
         showMultiCityError("Maximum 8 stops allowed.");
         return;
     }
-    
+
     const div = document.createElement('div');
     div.className = 'input-item';
     div.style.width = '100%';
@@ -1014,17 +1103,60 @@ async function queryMultiCity() {
 
         const area = document.getElementById('multiCityResultArea');
         if (area) {
-            const { path, total_time, total_distance, total_price } = data.route;
+            const { path, total_time, total_distance, total_price, requested_stops } = data.route;
             const hour = Math.floor(total_time / 60);
             const min = total_time % 60;
-            
+
+            // --- NEW LEG-BY-LEG FORMATTING LOGIC ---
+            let pathHtml = '';
+            let currentLegPath = [];
+            let reqStopTargetIndex = 1;
+            let legCount = 1;
+
+            path.forEach((iata) => {
+                currentLegPath.push(iata);
+
+                if (requested_stops && reqStopTargetIndex < requested_stops.length && iata === requested_stops[reqStopTargetIndex]) {
+                    let start = currentLegPath[0];
+                    let end = currentLegPath[currentLegPath.length - 1];
+                    let layovers = currentLegPath.slice(1, -1);
+
+                    pathHtml += `<div style="margin-bottom: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">`;
+                    pathHtml += `<div style="font-weight: 800; color: #1e293b; font-size: 14px;">Leg ${legCount}: <span style="color: #22c55e;">${start}</span> <i class="fa fa-long-arrow-right" style="color: #94a3b8; margin: 0 5px;"></i> <span style="color: #3b82f6;">${end}</span></div>`;
+
+                    if (layovers.length > 0) {
+                        pathHtml += `<div style="font-size: 12px; color: #64748b; margin-top: 4px;"><i class="fa fa-circle-o" style="margin-right:4px;"></i> Layovers: ${layovers.join(' &rarr; ')}</div>`;
+                    } else {
+                        pathHtml += `<div style="font-size: 12px; color: #10b981; margin-top: 4px;"><i class="fa fa-bolt" style="margin-right:4px;"></i> Direct Flight</div>`;
+                    }
+                    pathHtml += `</div>`;
+
+                    currentLegPath = [iata];
+                    reqStopTargetIndex++;
+                    legCount++;
+                }
+            });
+
+            if (pathHtml === '') {
+                pathHtml = `<div style="margin-bottom: 8px; font-size: 14px; text-align: left;">${path.join(' &rarr; ')}</div>`;
+            }
+
             area.innerHTML = `
-                <div class="summary" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 10px;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
-                    <div style="margin-bottom: 8px; font-size: 14px;"><b>Path:</b><br/> ${path.join(' <i class="fa fa-arrow-right" style="color: #94a3b8; font-size: 12px; margin: 0 4px;"></i> ')}</div>
-                    <div style="margin-bottom: 5px; font-size: 14px;"><b>Total Price:</b> <span style="color: #059669; font-weight: 800; font-size: 16px;">$${total_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits:2})}</span></div>
-                    <div style="margin-bottom: 5px; font-size: 14px;"><b>Flight Distance:</b> ${total_distance.toLocaleString()} km</div>
-                    <div style="font-size: 14px;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
+                <div class="summary" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+                    <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
+                    
+                    ${pathHtml}
+                    
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="margin-bottom: 4px; font-size: 13px; color: #64748b;"><b>Total Distance:</b> ${total_distance.toLocaleString()} km</div>
+                            <div style="font-size: 13px; color: #64748b;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold;">Est. Price</div>
+                            <div style="color: #059669; font-weight: 900; font-size: 20px;">$${total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                    </div>
                 </div>
             `;
             area.style.display = 'block';
