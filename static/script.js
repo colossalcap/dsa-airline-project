@@ -135,12 +135,20 @@ window.switchPanel = function (panelId) {
 
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.collapseBtn').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.floating').forEach(p => p.classList.remove('active'));
 
     const panel = document.getElementById('panel-' + panelId);
     if (panel) panel.style.display = 'block';
 
     const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
     if (btn) btn.classList.add('active');
+
+    const collpaseBtn = document.querySelector('div[value="panel-' + panelId + '"]');
+    if (collpaseBtn) collpaseBtn.style.display = 'block';
+
+    const floating = document.querySelector('div[value="panel-' + panelId + '"].expand');
+    if (floating) document.querySelector('div[value="panel-' + panelId + '"].floating').classList.add("active");
 
     activePanel = panelId;
 
@@ -167,6 +175,7 @@ window.clearAllInputs = function () {
     });
 
     document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
+    document.querySelectorAll(".floating .box").forEach(b => b.innerHTML = "");
 
     hideError();
     if (typeof hideAltError === 'function') hideAltError();
@@ -389,7 +398,7 @@ function generateDynamicTabs() {
         'connections': 'fewest'
     };
 
-    for (const crit of ['price', 'time',  'distance', 'connections']) {
+    for (const crit of ['price', 'time', 'distance', 'connections']) {
         const route = currentRoutesData[crit];
         if (!route) continue;
         const pathStr = route.path.join(',');
@@ -403,6 +412,7 @@ function generateDynamicTabs() {
 
     const bestBadge = document.getElementById('bestOverallBadge');
     const allRoutesContainer = document.getElementById('result-box');
+    const floatContainer = document.querySelector('div[value="panel-optimal"].floating .box');
     allRoutesContainer.innerHTML = '';
     const pathKeys = Object.keys(uniquePaths);
 
@@ -410,12 +420,14 @@ function generateDynamicTabs() {
         bestBadge.style.display = 'block';
         const singlePath = uniquePaths[pathKeys[0]];
         createRouteCard(singlePath, 'Best Route', allRoutesContainer, criteriaNames);
+        createRouteCard(singlePath, 'Best Route', floatContainer, criteriaNames);
     } else {
         if (bestBadge) bestBadge.style.display = 'none';
         pathKeys.forEach((pathKey, index) => {
             const pathData = uniquePaths[pathKey];
             const cardTitle = `Route ${index + 1}`;
             createRouteCard(pathData, cardTitle, allRoutesContainer, criteriaNames);
+            createRouteCard(pathData, cardTitle, floatContainer, criteriaNames);
         });
     }
 
@@ -443,7 +455,6 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
 
     const cardClasses = ['result-card'].concat(pathData.criterias.map(c => criteriaNames[c])).join(' ');
 
-    // 构建卡片HTML结构
     const cardHTML = `
         <div class="${cardClasses}">
 
@@ -459,7 +470,7 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
             </div>
 
             <div class="third">
-                <div class="price">$${routeData.total_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="price">$${routeData.total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div class="distance">${routeData.total_distance.toLocaleString()} km</div>
             </div>
             
@@ -471,13 +482,13 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
 
     const cardElement = container.lastElementChild;
     const showMapBtn = cardElement.querySelector('.showRoute');
-    
+
     showMapBtn.addEventListener('click', () => {
         if (routeLine) fadeOutAndRemove(routeLine);
         markers.forEach(fadeOutAndRemove);
         markers = [];
         renderMap(routeData);
-        
+
         document.querySelectorAll('.result-card').forEach(card => {
             card.classList.remove('selected');
         });
@@ -590,7 +601,7 @@ async function queryAlternativeRoutes() {
         document.getElementById('altSummary').innerHTML =
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
-        // document.getElementById('altSortSelect').value = 'cheapest';
+        document.querySelector(".tab-btn.cheapest").click();
         renderAltRoutesList();
 
         if (altRoutesData.length > 0) {
@@ -617,22 +628,23 @@ window.sortAltRoutes = function (value, element) {
         altRoutesData.sort((a, b) => a.total_time - b.total_time);
     } else if (value === 'shortest') {
         altRoutesData.sort((a, b) => a.total_distance - b.total_distance);
+    } else if (value === 'fewest') {
+        altRoutesData.sort((a, b) => a.path.length - b.path.length);
     }
-
     renderAltRoutesList();
-
-    if (altRoutesData.length > 0) {
-        selectAltRoute(0);
-    }
 };
 
 function renderAltRoutesList() {
     const container = document.getElementById('altRoutesList');
     container.innerHTML = '';
 
+    const floatContainer = document.querySelector('div[value="panel-alternatives"] .box');
+    floatContainer.innerHTML = '';
+
     const minPrice = Math.min(...altRoutesData.map(r => r.total_price));
     const minTime = Math.min(...altRoutesData.map(r => r.total_time));
     const minDistance = Math.min(...altRoutesData.map(r => r.total_distance));
+    const minStops = Math.min(...altRoutesData.map(r => r.path.length));
 
     altRoutesData.forEach((route, idx) => {
         const card = document.createElement('div');
@@ -656,6 +668,10 @@ function renderAltRoutesList() {
             card.classList.add("shortest");
             typeHTML += `<div class="shortest"></div>`
         }
+        if (route.path.length === minStops) {
+            card.classList.add("fewest");
+            typeHTML += `<div class="fewest"></div>`
+        }
 
         card.innerHTML = `
             <div class="first"><div class="title">Route ${idx + 1}</div><div class="type">${typeHTML}</div></div>
@@ -664,9 +680,12 @@ function renderAltRoutesList() {
             <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
             <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
         `;
+        
         container.appendChild(card);
+        selectAltRoute(0);
+        const cardClone = card.cloneNode(true);
+        floatContainer.appendChild(cardClone);        
     });
-    selectAltRoute(0);
 }
 
 function selectAltRoute(index) {
@@ -774,6 +793,9 @@ function renderBfsLevels(reachable) {
     const airport = extractAirportName(document.getElementById('bfsStart').value);
     container.innerHTML = '';
 
+    const floatContainer = document.querySelector("div[value=panel-reachability].floating .box");
+    floatContainer.innerHTML = '';
+
     const levelLabels = {
         1: 'Direct',
         2: '1 Stop',
@@ -781,6 +803,7 @@ function renderBfsLevels(reachable) {
         4: '3 Stops'
     };
 
+    document.querySelectorAll('.bfsControls div').forEach(p => p.style.display = "none");
     for (const level of Object.keys(reachable).sort()) {
         // Make button appear
         document.querySelector(`.bfsControls .level-${level}`).style.display = "block";
@@ -789,11 +812,17 @@ function renderBfsLevels(reachable) {
         const group = document.createElement('div');
         group.classList.add('bfsGroup', `level-${level}`);
 
+        const floatGroup = document.createElement('div');
+        floatGroup.classList.add('result-card', `level-${level}`);
+
         const header = document.createElement('div');
         const span = document.createElement('span');
         header.className = `title`;
         header.innerHTML = `${levelLabels[level] + ' flights'} from <span>${airport}</span>`;
         group.appendChild(header);
+
+        const headerClone = header.cloneNode(true);
+        floatGroup.appendChild(headerClone);
 
         const list = document.createElement('div');
         list.className = 'bfs-airport-list';
@@ -811,15 +840,37 @@ function renderBfsLevels(reachable) {
             };
             list.appendChild(chip);
         });
+        group.appendChild(list); 
 
-        group.appendChild(list);
+        const floatList = document.createElement('div');
+        floatList.className = 'bfs-airport-list';
+
+        airports.forEach(ap => {
+            const chip = document.createElement('span');
+            chip.className = 'bfs-airport-chip';
+            chip.textContent = ap.iata;
+            chip.title = ap.name;
+            chip.onclick = () => {
+                const coords = ap.coords;
+                if (coords) {
+                    map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
+                }
+            };
+            floatList.appendChild(chip);
+        });
+        floatGroup.appendChild(floatList);
 
         const footer = document.createElement('div');
         footer.className = `total`;
         footer.textContent = `Total: ${airports.length} ${level > 1 ? '' : 'direct '}airport${airports.length > 1 ? 's' : ''} ${level > 1 ? 'with ' + levelLabels[level] : ''}`;
         group.appendChild(footer);
+        const footerClone = footer.cloneNode(true);
+        floatGroup.appendChild(footerClone);
 
         container.appendChild(group);
+        floatContainer.appendChild(floatGroup);
+
+
     }
 }
 
@@ -871,6 +922,72 @@ function switchLevel(btn) {
     document.querySelectorAll('.bfsGroup').forEach(group => {
         group.style.display = group.classList.contains(level) ? 'block' : 'none';
     });
+}
+
+
+// ===================================================================
+// FLOATING PANEL
+// ===================================================================
+function collapsePanel(element) {
+    const panelID = element.getAttribute("value");
+    let panel = document.getElementById(panelID);
+
+    if (element.classList.contains("collapse")) {
+        panel.classList.add("collapse");
+        element.classList.remove("collapse");
+        element.classList.add("expand");
+        element.querySelector("span").textContent = "Expand";
+        
+        if (document.querySelector('div[value="' + panelID + '"].floating .box div') != null) {
+            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
+
+            document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
+            const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .result-card'))
+                .findIndex(div => div.classList.contains('selected'));
+            
+            if (panelID != "panel-reachability") { 
+                document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
+            } else {
+                const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div'))
+                .findIndex(div => div.classList.contains('selected'));
+                document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
+            }
+        }
+    }
+    else {
+        panel.classList.remove("collapse");
+        element.classList.add("collapse");
+        element.classList.remove("expand");
+        element.querySelector("span").textContent = "Collapse";
+        document.querySelector('div[value="' + panelID + '"].floating').classList.remove("active");
+
+        document.querySelectorAll('div[id="' + panelID + '"] .result-card').forEach(div => div.classList.remove('selected'));
+        const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
+            .findIndex(div => div.classList.contains('active'));
+
+        if (panelID != "panel-reachability") { 
+            document.querySelectorAll('div[id="' + panelID + '"] .result-card')[index].querySelector(".showRoute").click();
+        } else {
+            const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
+            .findIndex(div => div.classList.contains('active'));
+            document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div')[index].click();
+        }
+    }
+}
+
+function floatCardControl(element, direction) {
+    const cards = Array.from(element.parentElement.querySelectorAll(".result-card"));
+    const activeIndex = cards.findIndex(c => c.classList.contains('active'));;
+
+    let newIndex = activeIndex + direction;
+    if (newIndex >= cards.length) newIndex = 0;
+    if (newIndex < 0) newIndex = cards.length - 1;
+
+    cards[activeIndex].classList.remove('active');
+    cards[newIndex].classList.add('active');
+
+    const showRoute = cards[newIndex].querySelector(".showRoute");
+    if (showRoute) showRoute.click();
 }
 
 window.queryReachability = queryReachability;

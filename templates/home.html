@@ -174,12 +174,14 @@
             <div class="alt-sort-controls">
                 <p>Sort By</p>
                 <div class="route-tabs">
-                    <button class="tab-btn cheapest" onclick="sortAltRoutes('cheapest', this)"><i
-                            class="fa fa-dollar"></i>Cheapest</button>
-                    <button class="tab-btn fastest" onclick="sortAltRoutes('fastest', this)"><i
-                            class="fa fa-clock-o"></i>Fastest</button>
-                    <button class="tab-btn shortest" onclick="sortAltRoutes('shortest', this)"><i
-                            class="fa fa-bolt"></i>Shortest</button>
+                    <div class="tab-btn cheapest" onclick="sortAltRoutes('cheapest', this)"><i
+                            class="fa fa-dollar"></i>Cheapest</div>
+                    <div class="tab-btn fastest" onclick="sortAltRoutes('fastest', this)"><i
+                            class="fa fa-clock-o"></i>Fastest</div>
+                    <div class="tab-btn shortest" onclick="sortAltRoutes('shortest', this)"><i
+                            class="fa fa-bolt"></i>Shortest</div>
+                    <div class="tab-btn fewest" onclick="sortAltRoutes('fewest', this)"><i
+                            class="fa fa-exchange"></i>Fewer Stop</div>
                 </div>
             </div>
 
@@ -260,6 +262,34 @@
         </div>
     </div>
 
+    <!-- Collapse button -->
+    <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-optimal"><i
+            class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
+    <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-alternatives" style="display: none;"><i
+            class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
+    <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-reachability" style="display: none;"><i
+            class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
+
+    <!-- Floating first panel -->
+    <div class="floating" value="panel-optimal">
+        <div class="button left" onclick="floatCardControl(this, -1)"><i class="fa fa-chevron-left"></i></div>
+        <div class="box"></div>
+        <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
+    </div>
+
+    <!-- Floating second panel -->
+    <div class="floating" value="panel-alternatives">
+        <div class="button left" onclick="floatCardControl(this, -1)"><i class="fa fa-chevron-left"></i></div>
+        <div class="box"></div>
+        <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
+    </div>
+
+    <!-- Floating third panel -->
+    <div class="floating" value="panel-reachability">
+        <div class="button left" onclick="floatCardControl(this, -1)"><i class="fa fa-chevron-left"></i></div>
+        <div class="box"></div>
+        <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
+    </div>
 
     <script src="/static/script.js?v=4"></script>
 </body>

@@ -5,6 +5,10 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+body {
+    overflow-x: hidden;
+}
+
 button {
     padding: 8px 20px;
     border-radius: 8px;
@@ -117,6 +121,10 @@ input[list]::-webkit-calendar-picker-indicator {
     background: white;
     border-radius: 24px;
     padding: 24px   ;
+}
+
+.panel.collapse {
+    transform: translateX(405px);
 }
 
 /* Panel - Title */
@@ -351,57 +359,31 @@ input[list]::-webkit-calendar-picker-indicator {
     border-top: 1px solid #9c9d9e;
 }
 
-.panel .result > p {
+.result > p {
   font-size: 20px;
   font-weight: 700;
   margin: 18px 0;
 }
 
-.panel .result-card {
+.result-card {
   border-radius: 14px;
   padding: 12px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-.panel .result-card h4 {
-    font-size: 18px;
-    font-weight: 500;
-}
-
-/* ===== Tabs ===== */
-.route-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-
-.tab-btn{
-    background: rgb(243 244 246);
-    color: rgb(55 65 81);
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-
-.tab-btn:hover,
-.tab-btn.active {
-    color: white;
-}
-
 /* Result Card */
-.panel .result-card .first,
-.panel .result-card .third {
+.result-card .first,
+.result-card .third {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.panel .result-card .first {
+.result-card .first {
     margin-bottom: 12px;
 }
 
-.panel .result-card .title {
+.result-card .title {
     font-size: 16px;
     font-weight: 700;
     width: 100%;
@@ -420,7 +402,7 @@ input[list]::-webkit-calendar-picker-indicator {
     border: 1px solid #c8e6c9;
 }
 
-.panel .second {
+.result-card .second {
     font-size: 12px;
     color: rgb(107 114 128);
     margin-bottom: 12px;
@@ -428,30 +410,30 @@ input[list]::-webkit-calendar-picker-indicator {
     flex-wrap: wrap;
 }
 
-.panel .second .path::after {
+.result-card .second .path::after {
     content: "|";
     margin: 0 6px;
 }
 
-.panel .second .stops::after {
+.result-card .second .stops::after {
     content: "•";
     margin: 0 6px;
 }
 
-.panel .third .price::before {
+.result-card .third .price::before {
     content: "Price: ";
     font-size: 12px;
     color: rgb(107 114 128);
 }
 
-.panel .third .distance::before {
+.result-card .third .distance::before {
     content: "Distance: ";
     font-size: 12px;
     color: rgb(107 114 128);
 }
 
-.panel .third .price,
-.panel .third .distance {
+.result-card .third .price,
+.result-card .third .distance {
     font-size: 14px;
     font-weight: 600;
 }
@@ -479,25 +461,25 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 .result-card.selected {
-  background: rgb(243 244 246);
-  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: rgba(0, 0, 0, 0.3) 2px 4px 8px 2px;
 }
 
-.panel .result-card .type {
+.result-card .type {
     display: flex;
     gap: 4px;
     width: 120%;
     justify-content: end;
+    flex-wrap: wrap;
 }
 
-.panel .result-card .type > div::before {
+.result-card .type > div::before {
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
     padding: 4px 8px;
 }
 
-.panel .result-card .showRoute {
+.result-card .showRoute {
     height: 36px;
     font-size: 14px;
     font-weight: 500;
@@ -512,87 +494,120 @@ input[list]::-webkit-calendar-picker-indicator {
     width: 100%;
 }
 
-.panel .result-card .showRoute:hover {
+.result-card .showRoute:hover,
+.tab-btn.fewest:hover {
     background: rgb(27, 103, 246, 0.2)
 }
 
 /* Result card - Type Cheapest */
-.panel .result-card.cheapest::before {
+.result-card.cheapest::before {
    background: rgb(34, 197, 94);
 }
 
-.panel .result-card.cheapest .type .cheapest::before {
+.result-card.cheapest .type .cheapest::before {
     content: "Cheapest";
     background: rgb(34, 197, 94, 0.1);
     color: rgb(34, 197, 94);
 }
 
-.panel .result-card.cheapest .showRoute {
+.result-card.cheapest .showRoute,
+.tab-btn.cheapest {
     background: rgb(34, 197, 94, 0.1);
     color: rgb(34, 197, 94);
 }
 
-.panel .result-card.cheapest .showRoute:hover {
+.result-card.cheapest .showRoute:hover,
+.tab-btn.cheapest:hover {
     background: rgb(34, 197, 94, 0.2);
 }
 
+.tab-btn.cheapest.active {
+    background: rgb(34, 197, 94);
+    color: white;
+}
+
 /* Result card - Type Fastest */
-.panel .result-card.fastest::before {
+.result-card.fastest::before {
     background: rgb(168, 85, 247);
 }
 
-.panel .result-card.fastest .type .fastest::before {
+.result-card.fastest .type .fastest::before {
     content: "Fastest";
     background: rgb(168, 85, 247, 0.1);
     color: rgb(168, 85, 247);
 }
 
-.panel .result-card.fastest .showRoute {
+.result-card.fastest .showRoute,
+.tab-btn.fastest {
     background: rgb(168, 85, 247, 0.1);
     color: rgb(168, 85, 247);
 }
 
-.panel .result-card.fastest .showRoute:hover {
+.result-card.fastest .showRoute:hover,
+.tab-btn.fastest:hover {
     background: rgb(168, 85, 247, 0.2);
 }
 
+.tab-btn.fastest.active {
+    background: rgb(168, 85, 247);
+    color: white;
+}
+
 /* Result card - Type Shortest */
-.panel .result-card.shortest::before {
+.result-card.shortest::before {
     background: rgb(255, 107, 0);
 }
 
-.panel .result-card.shortest .type .shortest::before {
+.result-card.shortest .type .shortest::before {
     content: "Shortest";
     background: rgb(255, 107, 0, 0.1);
     color: rgb(255, 107, 0);
 }
 
-.panel .result-card.shortest .showRoute {
+.result-card.shortest .showRoute,
+.tab-btn.shortest {
     background: rgb(255, 107, 0, 0.1);
     color: rgb(255, 107, 0);
 }
 
-.panel .result-card.shortest .showRoute:hover {
+.result-card.shortest .showRoute:hover,
+.tab-btn.shortest:hover {
     background: rgb(255, 107, 0, 0.2);
 }
 
+.tab-btn.shortest.active {
+    background: rgb(255, 107, 0);
+    color: white;
+}
+
 /* Result card - Type Fewest */
-.panel .result-card.fewest::before {
+.result-card.fewest::before {
     background: rgb(27, 103, 246);
 }
 
-.panel .result-card.fewest .type .fewest::before {
+.result-card.fewest .type .fewest::before {
     content: "Fewer Stops";
+    background: rgb(27, 103, 246, 0.1);
+    color: rgb(27, 103, 246);
+    min-width: 82px;
+}
+
+.tab-btn.fewest {
     background: rgb(27, 103, 246, 0.1);
     color: rgb(27, 103, 246);
 }
 
+.tab-btn.fewest.active {
+    background: rgb(27, 103, 246);
+    color: white;
+}
+
 /* Result card - Type Cheapest & Fastest */
-.panel .result-card.cheapest.fastest::before{
+.result-card.cheapest.fastest::before{
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247));
 }
 
-.panel .result-card.cheapest.fastest .showRoute {
+.result-card.cheapest.fastest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2)); 
@@ -600,7 +615,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.fastest .showRoute:hover {
+.result-card.cheapest.fastest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3));
@@ -609,11 +624,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Shortest */
-.panel .result-card.cheapest.shortest::before {
+.result-card.cheapest.shortest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0));
 }
 
-.panel .result-card.cheapest.shortest .showRoute {
+.result-card.cheapest.shortest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2)); 
@@ -621,7 +636,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.shortest .showRoute:hover {
+.result-card.cheapest.shortest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3));
@@ -630,11 +645,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Fewest */
-.panel .result-card.cheapest.fewest::before {
+.result-card.cheapest.fewest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(27, 103, 246));
 }
 
-.panel .result-card.cheapest.fewest .showRoute {
+.result-card.cheapest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -642,7 +657,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.fewest .showRoute:hover {
+.result-card.cheapest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(27, 103, 246, 0.3));
@@ -651,11 +666,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Fastest & Shortest */
-.panel .result-card.fastest.shortest::before {
+.result-card.fastest.shortest::before {
     background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0));
 }
 
-.panel .result-card.fastest.shortest .showRoute {
+.result-card.fastest.shortest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
@@ -663,7 +678,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.fastest.shortest .showRoute:hover {
+.result-card.fastest.shortest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
@@ -672,11 +687,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Fastest & Fewest */
-.panel .result-card.fastest.fewest::before {
+.result-card.fastest.fewest::before {
     background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(27, 103, 246));
 }
 
-.panel .result-card.fastest.fewest .showRoute {
+.result-card.fastest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -684,7 +699,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.fastest.fewest .showRoute:hover {
+.result-card.fastest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(27, 103, 246, 0.3));
@@ -693,11 +708,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Shortest & Fewest */
-.panel .result-card.shortest.fewest::before {
+.result-card.shortest.fewest::before {
     background: linear-gradient(to bottom, rgb(255, 107, 0), rgb(27, 103, 246));
 }
 
-.panel .result-card.shortest.fewest .showRoute {
+.result-card.shortest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -705,7 +720,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.shortest.fewest .showRoute:hover {
+.result-card.shortest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
@@ -714,11 +729,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Fastest & Shortest */
-.panel .result-card.cheapest.fastest.shortest::before {
+.result-card.cheapest.fastest.shortest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0));
 }
 
-.panel .result-card.cheapest.fastest.shortest .showRoute {
+.result-card.cheapest.fastest.shortest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
@@ -726,7 +741,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.fastest.shortest .showRoute:hover {
+.result-card.cheapest.fastest.shortest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
@@ -735,11 +750,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Fastest & Fewest */
-.panel .result-card.cheapest.fastest.fewest::before {
+.result-card.cheapest.fastest.fewest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246));
 }
 
-.panel .result-card.cheapest.fastest.fewest .showRoute {
+.result-card.cheapest.fastest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -747,7 +762,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.fastest.fewest .showRoute:hover {
+.result-card.cheapest.fastest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
@@ -756,11 +771,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Shortest & Fewest */
-.panel .result-card.cheapest.shortest.fewest::before {
+.result-card.cheapest.shortest.fewest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246));
 }
 
-.panel .result-card.cheapest.shortest.fewest .showRoute {
+.result-card.cheapest.shortest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -768,7 +783,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.shortest.fewest .showRoute:hover {
+.result-card.cheapest.shortest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
@@ -777,11 +792,11 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Fastest & Shortest & Fewest */
-.panel .result-card.fastest.shortest.fewest::before {
+.result-card.fastest.shortest.fewest::before {
     background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
 }
 
-.panel .result-card.fastest.shortest.fewest .showRoute {
+.result-card.fastest.shortest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -789,7 +804,7 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.fastest.shortest.fewest .showRoute:hover {
+.result-card.fastest.shortest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
@@ -798,15 +813,15 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 /* Result card - Type Cheapest & Fastest & Shortest & Fewest */
-.panel .result-card.cheapest.fastest.shortest.fewest .type{
+.result-card.cheapest.fastest.shortest.fewest .type{
     flex-wrap: wrap;
 }
 
-.panel .result-card.cheapest.fastest.shortest.fewest::before {
+.result-card.cheapest.fastest.shortest.fewest::before {
     background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
 }
 
-.panel .result-card.cheapest.fastest.shortest.fewest .showRoute {
+.result-card.cheapest.fastest.shortest.fewest .showRoute {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
@@ -814,12 +829,33 @@ input[list]::-webkit-calendar-picker-indicator {
     -webkit-text-fill-color: transparent;
 }
 
-.panel .result-card.cheapest.fastest.shortest.fewest .showRoute:hover {
+.result-card.cheapest.fastest.shortest.fewest .showRoute:hover {
     background-image: 
         linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
         linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
     -webkit-background-clip: text, border-box;
     -webkit-text-fill-color: transparent;
+}
+
+/* ===== Tabs ===== */
+.route-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 20px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.tab-btn i {
+    margin-right: 8px;
 }
 
 /* ===== FEATURE 1: Alternative Routes (DFS) ===== */
@@ -945,7 +981,8 @@ input[list]::-webkit-calendar-picker-indicator {
     cursor: pointer;
 }
 
-.bfsGroup .total {
+.bfsGroup .total,
+div.floating[value="panel-reachability"] .result-card .total {
     margin-top: 16px;
     font-size: 14px;
     font-weight: 500;
@@ -1039,6 +1076,9 @@ path.leaflet-interactive {
     width: 36px;
     background: rgb(27, 103, 246);
     color: white;
+    position: relative;
+    bottom: 5px;
+    right: 30px;
 }
 
 .marker-start .fa {
@@ -1050,6 +1090,9 @@ path.leaflet-interactive {
     width: 36px;
     background: rgb(34, 197, 94);
     color: white;
+    position: relative;
+    bottom: 20px;
+    right: 20px;
 }
 
 .marker-end .fa {
@@ -1063,7 +1106,8 @@ path.leaflet-interactive {
     font-size: 32px;
     font-weight: bold;
     position: relative;
-    bottom: 34px;
+    right: 2px;
+    bottom: 32px;
 }
 
 /* ===== BFS Marker Colors ===== */
@@ -1093,11 +1137,138 @@ path.leaflet-interactive {
     color: white;
 }
 
-@media screen and (max-width: 780px) {
-    .header {
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-        min-width: 560px;
+/* Collapse Button */
+.collapseBtn,
+.floating .button {
+    background: rgb(205 223 255);
+    color: rgb(27, 103, 246, 0.8);
+    font-size: 18px;
+    height: 40px;
+    width: 40px;
+    border-radius: 100%;
+    text-align: center;
+    align-content: center;
+    cursor: pointer;
+}
+
+.collapseBtn {
+    background: rgb(205 223 255);
+    color: rgb(27, 103, 246, 0.8);
+    font-size: 18px;
+    height: 40px;
+    width: 40px;
+    border-radius: 100%;
+    position: relative;
+    display: inline-block;
+    left: 94.5%;
+    z-index: 200;
+    margin-top: 2%;
+    transition: transform 0.5s;
+}
+
+.collapseBtn i {
+    margin: 0 0 4px 1px;
+}
+
+.collapseBtn .tooltip {
+    visibility: hidden;
+    width: 90px;
+    background-color: rgb(198 217 253);
+    color: rgb(27, 103, 246);
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.collapseBtn.collapse .tooltip {
+    position: absolute;
+    right: 120%;
+    bottom: 15%;
+}
+
+.collapseBtn.expand .tooltip {
+    position: absolute;
+    right: -245%;
+    bottom: 10%;
+    rotate: 180deg;
+}
+
+.collapseBtn .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgb(198 217 253);
+}
+
+.collapseBtn:hover .tooltip {
+    visibility: visible;
+} 
+
+.collapseBtn.expand {
+   transform: rotate(180deg);
+}
+
+/* Floating Panel */
+.floating {
+    position: absolute;
+    top: 80px;
+    right: 100px;
+    display: flex;
+    align-items: center;
+    display: none; 
+}
+
+.floating.active {
+    display: flex;
+}
+
+.floating .result-card {
+    background: white;
+    margin: 0 8px;
+    width: 320px;
+    display: none;
+}
+
+.floating .result-card.active {
+    display: block;
+}
+
+.floating .result-card .showRoute {
+    display: none;
+}
+
+div.floating[value="panel-reachability"] .result-card {
+    width: auto;
+}
+
+div.floating[value="panel-reachability"] .result-card .title {
+    font-size: 14px;
+    font-weight: 400;
+    width: 320px;
+    align-items: center;
+    margin-bottom: 12px;
+    display: block;
+}
+
+div.floating[value="panel-reachability"] .result-card .title:before {
+    font-family: 'FontAwesome';
+    content: '\f058';
+    margin-right: 8px;
+}
+
+div.floating[value="panel-reachability"] .result-card .bfs-airport-list {
+    max-height: 88px;
+}
+
+@media screen and (max-width: 800px) {
+    body {
+        min-width: 800px;
+        overflow-x: auto;
     }
 }
