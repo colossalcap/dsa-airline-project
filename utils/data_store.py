@@ -5,7 +5,16 @@ import math
 flight_graph = {}
 airport_names = {}
 coords_dict = {}
-sorted_iata_codes = []
+
+# Common hubs used to normalize airport city names
+hub_patch = {
+    "LHR": "London", "LGW": "London", "STN": "London", "LTN": "London", "LCY": "London",
+    "JFK": "New York", "LGA": "New York", "EWR": "New York",
+    "HND": "Tokyo", "NRT": "Tokyo", 
+    "CDG": "Paris", "ORY": "Paris",
+    "DXB": "Dubai", "SIN": "Singapore", "LAX": "Los Angeles", 
+    "SFO": "San Francisco", "ORD": "Chicago", "ATL": "Atlanta"
+}
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6371.0 
@@ -41,14 +50,6 @@ def load_flight_data():
             if not city:
                 city = name.split(" Airport")[0].split(" International")[0].strip()
             
-            hub_patch = {
-                "LHR": "London", "LGW": "London", "STN": "London", "LTN": "London", "LCY": "London",
-                "JFK": "New York", "LGA": "New York", "EWR": "New York",
-                "HND": "Tokyo", "NRT": "Tokyo", 
-                "CDG": "Paris", "ORY": "Paris",
-                "DXB": "Dubai", "SIN": "Singapore", "LAX": "Los Angeles", 
-                "SFO": "San Francisco", "ORD": "Chicago", "ATL": "Atlanta"
-            }
             if iata in hub_patch:
                 city = hub_patch[iata]
             
@@ -102,9 +103,4 @@ def load_flight_data():
     except Exception as e:
         print(f"Load JSON failed: {str(e)}")
 
-def build_sorted_iata_list():
-    from utils.algorithms import quick_sort
-    codes = [code for code in airport_names.keys()]
-    quick_sort(codes, key_func=lambda x: x)
-    sorted_iata_codes.clear()
-    sorted_iata_codes.extend(codes)
+

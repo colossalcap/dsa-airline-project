@@ -1,6 +1,6 @@
 import sys
 from flask import Flask
-from utils.data_store import load_flight_data, build_sorted_iata_list
+from utils.data_store import load_flight_data
 from routes import main_bp
 
 sys.setrecursionlimit(10000)
@@ -11,7 +11,6 @@ app.register_blueprint(main_bp)
 
 # Load data on startup
 load_flight_data()
-build_sorted_iata_list()
 
 if __name__ == '__main__':
     # Run the Flask server

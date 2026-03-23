@@ -38,24 +38,7 @@ def quick_sort(arr, key_func):
     print(f"  [QUICK SORT] Completed: {partition_count[0]} partitions, {comparison_count[0]} comparisons in {elapsed:.2f}ms")
     return arr
 
-def binary_search(sorted_list, target):
-    """Binary Search implementation to find a target IATA code."""
-    low = 0
-    high = len(sorted_list) - 1
-    steps = 0
-    print(f"  [BINARY SEARCH] Searching for '{target}' in {len(sorted_list)} sorted items...")
-    while low <= high:
-        mid = (low + high) // 2
-        steps += 1
-        if sorted_list[mid] == target:
-            print(f"  [BINARY SEARCH] FOUND '{target}' at index {mid} in {steps} steps")
-            return mid
-        elif sorted_list[mid] < target:
-            low = mid + 1
-        else:
-            high = mid - 1
-    print(f"  [BINARY SEARCH] '{target}' NOT FOUND after {steps} steps")
-    return -1
+
 
 def find_optimal_route(start_iata, end_iata, criteria='time'):
     print(f"  [DIJKSTRA] Running Dijkstra's algorithm: {start_iata} -> {end_iata} (criteria: {criteria})")

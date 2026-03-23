@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
-import time
-from utils.data_store import flight_graph, airport_names, coords_dict, sorted_iata_codes
+from utils.data_store import flight_graph, airport_names, coords_dict
 from utils.algorithms import (
-    quick_sort, binary_search, find_optimal_route,
+    quick_sort, find_optimal_route,
     find_alternative_routes_yens, find_reachable_airports_bfs,
     plan_multi_city_route
 )
@@ -65,28 +64,7 @@ def get_airport_options():
     except Exception as e:
         return jsonify({"code": 0, "msg": "Failed to load airports"})
 
-@main_bp.route('/api/validate_iata', methods=['POST'])
-def validate_iata():
-    data = request.get_json() or {}
-    iata = (data.get('iata') or '').upper().strip()
-    if not iata:
-        return jsonify({"code": 0, "msg": "No IATA code provided."})
 
-    index = binary_search(sorted_iata_codes, iata)
-    if index != -1:
-        return jsonify({
-            "code": 1,
-            "valid": True,
-            "iata": iata,
-            "name": airport_names.get(iata, iata)
-        })
-    else:
-        return jsonify({
-            "code": 1,
-            "valid": False,
-            "iata": iata,
-            "msg": f"IATA code '{iata}' not found."
-        })
 
 @main_bp.route('/api/alternative_routes', methods=['POST'])
 def get_alternative_routes():
@@ -98,7 +76,7 @@ def get_alternative_routes():
     try:
         max_conn = int(max_conn)
         max_conn = max(1, min(max_conn, 5))
-    except:
+    except ValueError:
         max_conn = 3
 
     if start not in airport_names or end not in airport_names:
@@ -126,7 +104,7 @@ def get_reachability():
     try:
         max_stops = int(max_stops)
         max_stops = max(1, min(max_stops, 4))
-    except:
+    except ValueError:
         max_stops = 2
 
     if start not in airport_names:
