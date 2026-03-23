@@ -58,7 +58,7 @@ window.onload = async function () {
     await loadAirportOptions();
     setupInputListeners();
     setupDarkMode();
-    
+
     // Initialize UI state
     switchPanel('optimal');
 };
@@ -89,7 +89,9 @@ function setupDarkMode() {
 }
 
 function initMap() {
-    map = L.map('map').setView([20, 0], 2);
+    map = L.map('map', {
+        minZoom: 2
+    }).setView([20, 0], 3);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
@@ -174,8 +176,15 @@ window.switchPanel = function (panelId) {
     const collpaseBtn = document.querySelector('div[value="panel-' + panelId + '"]');
     if (collpaseBtn) collpaseBtn.style.display = 'block';
 
-    const floating = document.querySelector('div[value="panel-' + panelId + '"].expand');
-    if (floating) document.querySelector('div[value="panel-' + panelId + '"].floating').classList.add("active");
+    const collapseExpanded = document.querySelector('div[value="panel-' + panelId + '"].expand');
+    if (collapseExpanded) {
+        // Auto-expand if collapsed when clicking header
+        if (typeof collapsePanel === 'function') {
+            collapsePanel(collapseExpanded);
+        } else {
+            document.querySelector('div[value="panel-' + panelId + '"].floating').classList.add("active");
+        }
+    }
 
     activePanel = panelId;
 
@@ -217,6 +226,7 @@ window.clearAllInputs = function () {
 
     document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
     document.querySelectorAll(".floating .box").forEach(b => b.innerHTML = "");
+    document.querySelectorAll('.floating').forEach(f => f.classList.remove('active'));
 
     hideError();
     if (typeof hideAltError === 'function') hideAltError();
@@ -459,20 +469,35 @@ function renderMap(data) {
         currentSegmentLatLngs.push(lineLatLng);
 
         const isRequested = requested_stops && requested_stops.includes(iata);
+        const isMultiCity = !!requested_stops;
 
         let markerHtml = '';
         let popupText = '';
 
         if (isRequested || index === 0 || index === path.length - 1) {
-            let bg = '#3b82f6';
-            if (index === 0) bg = '#22c55e';
-            else if (index === path.length - 1) bg = '#ef4444';
+            if (isMultiCity) {
+                let bg = '#3b82f6';
+                if (index === 0) bg = '#22c55e';
+                else if (index === path.length - 1) bg = '#ef4444';
 
-            markerHtml = `<div class="premium-marker" style="background: ${bg}; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:16px; margin-top:-17px; margin-left:-17px; z-index: 1000;">${stopNumber}</div>`;
-            popupText = `<b>${fullName}</b><br>Itinerary Stop ${stopNumber}`;
-            stopNumber++;
+                markerHtml = `<div class="premium-marker" style="background: ${bg}; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:bold; font-size:16px; margin-top:-17px; margin-left:-17px; z-index: 1000;">${stopNumber}</div>`;
+                popupText = `<b>${fullName}</b><br>Itinerary Stop ${stopNumber}`;
+                stopNumber++;
+            } else {
+                if (index === 0) {
+                    markerHtml = `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`;
+                    popupText = `<b>${fullName}</b><br>Departure`;
+                } else if (index === path.length - 1) {
+                    markerHtml = `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`;
+                    popupText = `<b>${fullName}</b><br>Arrival`;
+                }
+            }
         } else {
-            markerHtml = `<div style="background: white; border: 3px solid #f97316; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top:-7px; margin-left:-7px;"></div>`;
+            if (isMultiCity) {
+                markerHtml = `<div style="background: white; border: 3px solid #f97316; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top:-7px; margin-left:-7px;"></div>`;
+            } else {
+                markerHtml = `<div class="marker-layover"><i class="fa fa-map-marker"></i></div>`;
+            }
             popupText = `<b>${fullName}</b><br>Layover`;
         }
 
@@ -747,11 +772,6 @@ async function queryAlternativeRoutes() {
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
         document.querySelector(".tab-btn.cheapest").click();
-        renderAltRoutesList();
-
-        if (altRoutesData.length > 0) {
-            selectAltRoute(0);
-        }
 
     } catch (err) {
         hideLoading('alt');
@@ -776,6 +796,9 @@ window.sortAltRoutes = function (value, element) {
         altRoutesData.sort((a, b) => a.path.length - b.path.length);
     }
     renderAltRoutesList();
+    if (altRoutesData.length > 0) {
+        selectAltRoute(0);
+    }
 };
 
 function renderAltRoutesList() {
