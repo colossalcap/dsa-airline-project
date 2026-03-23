@@ -61,7 +61,33 @@ window.onload = async function () {
     initMap();
     await loadAirportOptions();
     setupInputListeners();
+    setupDarkMode();
 };
+
+// ===== DARK MODE SETUP =====
+function setupDarkMode() {
+    const toggleBtn = document.getElementById('darkModeToggle');
+    if (!toggleBtn) return;
+
+    const icon = toggleBtn.querySelector('i');
+
+    // Check local storage for existing preference
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        icon.classList.replace('fa-moon-o', 'fa-sun-o');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        if (document.body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+            icon.classList.replace('fa-moon-o', 'fa-sun-o');
+        } else {
+            localStorage.setItem('theme', 'light');
+            icon.classList.replace('fa-sun-o', 'fa-moon-o');
+        }
+    });
+}
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
@@ -165,9 +191,21 @@ window.clearAllInputs = function () {
     document.getElementById('altEnd').value = '';
     document.getElementById('bfsStart').value = '';
 
+    document.querySelectorAll('.multi-city-input').forEach(input => input.value = '');
+
+    const mcContainer = document.getElementById('multiCityInputsContainer');
+    if (mcContainer) {
+        const items = mcContainer.querySelectorAll('.input-item');
+        for (let i = 3; i < items.length; i++) {
+            items[i].remove();
+        }
+    }
+
     document.getElementById('resultCard').style.display = 'none';
     document.getElementById('altResultArea').style.display = 'none';
     document.getElementById('bfsResultArea').style.display = 'none';
+    const mcArea = document.getElementById('multiCityResultArea');
+    if (mcArea) mcArea.style.display = 'none';
 
     const bars = document.querySelectorAll('.loading-bar');
     bars.forEach(bar => {
@@ -180,6 +218,7 @@ window.clearAllInputs = function () {
     hideError();
     if (typeof hideAltError === 'function') hideAltError();
     if (typeof hideBfsError === 'function') hideBfsError();
+    if (typeof hideMultiCityError === 'function') hideMultiCityError();
 
     clearMap();
     resetRouteDisplay();
@@ -680,11 +719,11 @@ function renderAltRoutesList() {
             <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
             <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
         `;
-        
+
         container.appendChild(card);
         selectAltRoute(0);
         const cardClone = card.cloneNode(true);
-        floatContainer.appendChild(cardClone);        
+        floatContainer.appendChild(cardClone);
     });
 }
 
@@ -840,7 +879,7 @@ function renderBfsLevels(reachable) {
             };
             list.appendChild(chip);
         });
-        group.appendChild(list); 
+        group.appendChild(list);
 
         const floatList = document.createElement('div');
         floatList.className = 'bfs-airport-list';
@@ -923,7 +962,155 @@ function switchLevel(btn) {
         group.style.display = group.classList.contains(level) ? 'block' : 'none';
     });
 }
+window.queryReachability = queryReachability;
 
+// ===================================================================
+// PANEL 4: MULTI-CITY PLANNER
+// ===================================================================
+function showMultiCityError(msg) {
+    const el = document.getElementById('multiCityErrorMsg');
+    if (el) {
+        el.innerText = msg;
+        el.style.display = 'block';
+    } else {
+        alert(msg);
+    }
+}
+
+function hideMultiCityError() {
+    const el = document.getElementById('multiCityErrorMsg');
+    if (el) el.style.display = 'none';
+}
+
+window.addMultiCityStop = function () {
+    const container = document.getElementById('multiCityInputsContainer');
+    const stopCount = container.querySelectorAll('.input-item').length + 1;
+
+    if (stopCount > 8) {
+        showMultiCityError("Maximum 8 stops allowed.");
+        return;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'input-item';
+    div.style.width = '100%';
+    div.innerHTML = `
+        <label>Stop ${stopCount} (Optional)</label>
+        <div class="list">
+            <i class="fa fa-map-marker"></i>
+            <input type="text" class="multi-city-input" list="airportList" autocomplete="off" placeholder="City or Airport">
+            <i class="fa fa-chevron-down"></i>
+        </div>
+    `;
+    container.appendChild(div);
+};
+
+async function queryMultiCity() {
+    hideMultiCityError();
+    clearMap();
+
+    const inputs = document.querySelectorAll('.multi-city-input');
+    const itinerary = [];
+
+    inputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) {
+            itinerary.push(extractIATA(val));
+        }
+    });
+
+    if (itinerary.length < 2) {
+        showMultiCityError("Please enter at least 2 valid airports.");
+        return;
+    }
+
+    showLoading('multicity', `Planning multi-city route for ${itinerary.length} stops...`);
+
+    try {
+        const res = await fetch('/api/multi_city', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itinerary })
+        });
+        const data = await res.json();
+
+        hideLoading('multicity');
+
+        if (data.code === 0) {
+            showMultiCityError(data.msg);
+            return;
+        }
+
+        renderMap(data.route);
+
+        const area = document.getElementById('multiCityResultArea');
+        if (area) {
+            const { path, total_time, total_distance, total_price, requested_stops } = data.route;
+            const hour = Math.floor(total_time / 60);
+            const min = total_time % 60;
+
+            let pathHtml = '';
+            let currentLegPath = [];
+            let reqStopTargetIndex = 1;
+            let legCount = 1;
+
+            path.forEach((iata) => {
+                currentLegPath.push(iata);
+
+                if (requested_stops && reqStopTargetIndex < requested_stops.length && iata === requested_stops[reqStopTargetIndex]) {
+                    let start = currentLegPath[0];
+                    let end = currentLegPath[currentLegPath.length - 1];
+                    let layovers = currentLegPath.slice(1, -1);
+
+                    pathHtml += `<div style="margin-bottom: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">`;
+                    pathHtml += `<div style="font-weight: 800; color: #1e293b; font-size: 14px;">Leg ${legCount}: <span style="color: #22c55e;">${start}</span> <i class="fa fa-long-arrow-right" style="color: #94a3b8; margin: 0 5px;"></i> <span style="color: #3b82f6;">${end}</span></div>`;
+
+                    if (layovers.length > 0) {
+                        pathHtml += `<div style="font-size: 12px; color: #64748b; margin-top: 4px;"><i class="fa fa-circle-o" style="margin-right:4px;"></i> Layovers: ${layovers.join(' &rarr; ')}</div>`;
+                    } else {
+                        pathHtml += `<div style="font-size: 12px; color: #10b981; margin-top: 4px;"><i class="fa fa-bolt" style="margin-right:4px;"></i> Direct Flight</div>`;
+                    }
+                    pathHtml += `</div>`;
+
+                    currentLegPath = [iata];
+                    reqStopTargetIndex++;
+                    legCount++;
+                }
+            });
+
+            if (pathHtml === '') {
+                pathHtml = `<div style="margin-bottom: 8px; font-size: 14px; text-align: left;">${path.join(' &rarr; ')}</div>`;
+            }
+
+            area.innerHTML = `
+                <div class="summary" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+                    <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
+                    
+                    ${pathHtml}
+                    
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="margin-bottom: 4px; font-size: 13px; color: #64748b;"><b>Total Distance:</b> ${total_distance.toLocaleString()} km</div>
+                            <div style="font-size: 13px; color: #64748b;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold;">Est. Price</div>
+                            <div style="color: #059669; font-weight: 900; font-size: 20px;">$${total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            area.style.display = 'block';
+        }
+
+    } catch (err) {
+        hideLoading('multicity');
+        showMultiCityError(`Script Error: ${err.message}`);
+        console.error(err);
+    }
+}
+
+window.queryMultiCity = queryMultiCity;
 
 // ===================================================================
 // FLOATING PANEL
@@ -937,21 +1124,24 @@ function collapsePanel(element) {
         element.classList.remove("collapse");
         element.classList.add("expand");
         element.querySelector("span").textContent = "Expand";
-        
+
         if (document.querySelector('div[value="' + panelID + '"].floating .box div') != null) {
             document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
 
             document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
             const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .result-card'))
                 .findIndex(div => div.classList.contains('selected'));
-            
-            if (panelID != "panel-reachability") { 
+
+            if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
                 document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
-            } else {
+            } else if (panelID == "panel-reachability") {
                 const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div'))
-                .findIndex(div => div.classList.contains('selected'));
+                    .findIndex(div => div.classList.contains('selected'));
                 document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
             }
+        } else if (panelID == "panel-multicity") {
+            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
+            document.querySelector('div[value="' + panelID + '"].floating .box').innerHTML = panel.querySelector("#multiCityResultArea").innerHTML;
         }
     }
     else {
@@ -965,11 +1155,11 @@ function collapsePanel(element) {
         const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
             .findIndex(div => div.classList.contains('active'));
 
-        if (panelID != "panel-reachability") { 
+        if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
             document.querySelectorAll('div[id="' + panelID + '"] .result-card')[index].querySelector(".showRoute").click();
-        } else {
+        } else if (panelID == "panel-reachability") {
             const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
-            .findIndex(div => div.classList.contains('active'));
+                .findIndex(div => div.classList.contains('active'));
             document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div')[index].click();
         }
     }
@@ -990,4 +1180,3 @@ function floatCardControl(element, direction) {
     if (showRoute) showRoute.click();
 }
 
-window.queryReachability = queryReachability;

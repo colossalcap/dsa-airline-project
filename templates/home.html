@@ -21,6 +21,10 @@
             <p>Flight Path Finder</p>
         </div>
         <div class="assist">
+            <button id="darkModeToggle" class="theme-toggle" title="Toggle Dark Mode"
+                style="background: transparent; color: #0A66C2; border: 1px solid #0A66C2; margin-right: 15px; border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <i class="fa fa-moon-o" style="margin: 0; font-size: 18px;"></i>
+            </button>
             <div class="features">
                 <button class="nav-btn active" data-panel="optimal" onclick="switchPanel('optimal')">
                     <i class="fa fa-plane"></i>Optimal Route</button>
@@ -28,6 +32,8 @@
                     <i class="fa fa-exchange"></i>Alternative Routes</button>
                 <button class="nav-btn" data-panel="reachability" onclick="switchPanel('reachability')">
                     <i class="fa fa-globe"></i>Where Can I Go?</button>
+                <button class="nav-btn" data-panel="multicity" onclick="switchPanel('multicity')">
+                    <i class="fa fa-map-signs"></i>Multi-City</button>
             </div>
         </div>
     </div>
@@ -245,9 +251,7 @@
         <div class="error-msg" id="bfsErrorMsg" style="display: none;"></div>
 
         <div id="bfsResultArea" style="display: none;">
-            <div class="summary" id="bfsSummary">🌍 <strong>1163</strong> airports reachable from
-                <strong>MLG</strong> within 3 flights
-            </div>
+            <div class="summary" id="bfsSummary"></div>
 
             <p><i class="fa fa-plane"></i>Reachable Airports</p>
 
@@ -262,12 +266,79 @@
         </div>
     </div>
 
+    <!-- Fourth Panel -->
+    <div class="panel" id="panel-multicity" style="display: none;">
+
+        <div class="title">
+            <p><i class="fa fa-map-signs"></i>Multi-City Planner</p>
+            <p>Plan a continuous route across multiple destinations</p>
+        </div>
+
+        <div class="input-row" style="flex-direction: column; gap: 15px;" id="multiCityInputsContainer">
+            <div class="input-item" style="width: 100%;">
+                <label>Stop 1 (Start)</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" class="multi-city-input" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. SIN)">
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="input-item" style="width: 100%;">
+                <label>Stop 2</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" class="multi-city-input" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. LHR)">
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="input-item" style="width: 100%;">
+                <label>Stop 3 (Optional)</label>
+                <div class="list">
+                    <i class="fa fa-map-marker"></i>
+                    <input type="text" class="multi-city-input" list="airportList" autocomplete="off"
+                        placeholder="City or Airport (e.g. JFK)">
+                    <i class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="addMultiCityStop()"
+            style="background: transparent; color: #1B67F6; border: 1px dashed #1B67F6; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: all 0.2s;">
+            <i class="fa fa-plus"></i> Add Another Stop
+        </button>
+
+        <div class="action-row" style="margin-top: 15px;">
+            <button class="search-btn" onclick="queryMultiCity()" style="flex: 1;"><i class="fa fa-search"></i>Plan
+                Trip</button>
+            <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
+                <i class="fa fa-trash trash-icon"></i>Clear
+            </button>
+        </div>
+
+        <div class="loading-bar" id="multicity-loading" style="display: none;">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <span class="loading-text">Planning multi-city route...</span>
+        </div>
+        <div class="error-msg" id="multiCityErrorMsg" style="display: none;"></div>
+
+        <div id="multiCityResultArea" style="display: none; margin-top: 15px;"></div>
+
+    </div>
+
     <!-- Collapse button -->
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-optimal"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-alternatives" style="display: none;"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-reachability" style="display: none;"><i
+            class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
+    <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-multicity" style="display: none;"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
 
     <!-- Floating first panel -->
@@ -289,6 +360,11 @@
         <div class="button left" onclick="floatCardControl(this, -1)"><i class="fa fa-chevron-left"></i></div>
         <div class="box"></div>
         <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
+    </div>
+
+    <!-- Floating fourth panel -->
+    <div class="floating" value="panel-multicity">
+        <div class="box"></div>
     </div>
 
     <script src="/static/script.js?v=4"></script>
