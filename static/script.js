@@ -57,7 +57,33 @@ window.onload = async function () {
     initMap();
     await loadAirportOptions();
     setupInputListeners();
+    setupDarkMode(); // Initialize Dark Mode
 };
+
+// ===== DARK MODE SETUP =====
+function setupDarkMode() {
+    const toggleBtn = document.getElementById('darkModeToggle');
+    if (!toggleBtn) return;
+    
+    const icon = toggleBtn.querySelector('i');
+    
+    // Check local storage for existing preference
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        icon.classList.replace('fa-moon-o', 'fa-sun-o');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        if (document.body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+            icon.classList.replace('fa-moon-o', 'fa-sun-o');
+        } else {
+            localStorage.setItem('theme', 'light');
+            icon.classList.replace('fa-sun-o', 'fa-moon-o');
+        }
+    });
+}
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
@@ -886,7 +912,6 @@ async function queryReachability() {
     }
 }
 
-// THIS FUNCTION RECEIVED THE MAIN UPGRADE TO HANDLE CLICKS
 function renderBfsLevels(reachable) {
     const container = document.getElementById('bfsLevelList');
     const airport = extractAirportName(document.getElementById('bfsStart').value);
@@ -919,13 +944,8 @@ function renderBfsLevels(reachable) {
             const chip = document.createElement('span');
             chip.className = 'bfs-airport-chip';
 
-            // --- UI REVERT: Back to just the clean 3-letter IATA code ---
             chip.textContent = ap.iata;
-
-            // --- UX MAINTAINED: Full name and instructions moved to hover tooltip ---
             chip.title = `${ap.name} (Click to route)`;
-
-            // --- UX MAINTAINED: Automatic Dijkstra routing click handler ---
             chip.onclick = () => {
                 handleBfsChipClick(ap.iata, ap.name);
             };
@@ -943,30 +963,23 @@ function renderBfsLevels(reachable) {
     }
 }
 
-// New dedicated handler for smoother visual demo flow
 function handleBfsChipClick(endIata, endName) {
     const startRaw = document.getElementById('bfsStart').value;
     if (!startRaw) return;
 
-    // 1. Instantly wipe BFS clutter from the map for a clean transition
     bfsMarkers.forEach(layer => map.removeLayer(layer));
     bfsMarkers = [];
     document.getElementById('bfsResultArea').style.display = 'none';
 
-    // 2. Clear standard temp markers before switching to avoid visual lag
     if (tempStartMarker) map.removeLayer(tempStartMarker);
     if (tempEndMarker) map.removeLayer(tempEndMarker);
 
-    // 3. Perform panel switch (this naturally clears markers too)
     switchPanel('optimal');
 
-    // 4. Populate standard search fields automatically
-    // Format must match datalist: "(IATA) - Name"
     const formattedEnd = `(${endIata}) - ${endName}`;
     document.getElementById('startAirport').value = startRaw;
     document.getElementById('endAirport').value = formattedEnd;
 
-    // 5. Execute standard Dijkstra search immediately
     queryShortestRoute();
 }
 
@@ -1023,7 +1036,7 @@ function switchLevel(btn) {
 window.queryReachability = queryReachability;
 
 // ===================================================================
-// PANEL 4: MULTI-CITY PLANNER (UPGRADED UI SUMMARY)
+// PANEL 4: MULTI-CITY PLANNER
 // ===================================================================
 function showMultiCityError(msg) {
     const el = document.getElementById('multiCityErrorMsg');
@@ -1107,7 +1120,6 @@ async function queryMultiCity() {
             const hour = Math.floor(total_time / 60);
             const min = total_time % 60;
 
-            // --- NEW LEG-BY-LEG FORMATTING LOGIC ---
             let pathHtml = '';
             let currentLegPath = [];
             let reqStopTargetIndex = 1;

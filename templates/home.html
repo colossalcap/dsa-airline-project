@@ -20,6 +20,10 @@
             <p>Flight Path Finder</p>
         </div>
         <div class="assist">
+            <button id="darkModeToggle" class="theme-toggle" title="Toggle Dark Mode" style="background: transparent; color: #0A66C2; border: 1px solid #0A66C2; margin-right: 15px; border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <i class="fa fa-moon-o" style="margin: 0; font-size: 18px;"></i>
+            </button>
+            
             <div class="features">
                 <button class="nav-btn active" data-panel="optimal" onclick="switchPanel('optimal')">
                     <i class="fa fa-plane"></i>Optimal Route</button>
@@ -226,9 +230,7 @@
         <div class="error-msg" id="bfsErrorMsg" style="display: none;"></div>
 
         <div id="bfsResultArea" style="display: none;">
-            <div class="summary" id="bfsSummary">🌍 <strong>1163</strong> airports reachable from
-                <strong>MLG</strong> within 3 flights
-            </div>
+            <div class="summary" id="bfsSummary"></div>
 
             <p><i class="fa fa-plane"></i>Reachable Airports</p>
 
@@ -302,7 +304,6 @@
         </div>
         <div class="error-msg" id="multiCityErrorMsg" style="display: none;"></div>
 
-        <!-- Result Box -->
         <div id="multiCityResultArea" style="display: none; margin-top: 15px;"></div>
 
     </div>
