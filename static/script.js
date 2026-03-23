@@ -57,16 +57,16 @@ window.onload = async function () {
     initMap();
     await loadAirportOptions();
     setupInputListeners();
-    setupDarkMode(); // Initialize Dark Mode
+    setupDarkMode();
 };
 
 // ===== DARK MODE SETUP =====
 function setupDarkMode() {
     const toggleBtn = document.getElementById('darkModeToggle');
     if (!toggleBtn) return;
-    
+
     const icon = toggleBtn.querySelector('i');
-    
+
     // Check local storage for existing preference
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
@@ -159,12 +159,20 @@ window.switchPanel = function (panelId) {
 
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.collapseBtn').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.floating').forEach(p => p.classList.remove('active'));
 
     const panel = document.getElementById('panel-' + panelId);
     if (panel) panel.style.display = 'block';
 
     const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
     if (btn) btn.classList.add('active');
+
+    const collpaseBtn = document.querySelector('div[value="panel-' + panelId + '"]');
+    if (collpaseBtn) collpaseBtn.style.display = 'block';
+
+    const floating = document.querySelector('div[value="panel-' + panelId + '"].expand');
+    if (floating) document.querySelector('div[value="panel-' + panelId + '"].floating').classList.add("active");
 
     activePanel = panelId;
 
@@ -205,6 +213,7 @@ window.clearAllInputs = function () {
     });
 
     document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
+    document.querySelectorAll(".floating .box").forEach(b => b.innerHTML = "");
 
     hideError();
     if (typeof hideAltError === 'function') hideAltError();
@@ -592,6 +601,7 @@ function generateDynamicTabs() {
 
     const bestBadge = document.getElementById('bestOverallBadge');
     const allRoutesContainer = document.getElementById('result-box');
+    const floatContainer = document.querySelector('div[value="panel-optimal"].floating .box');
     allRoutesContainer.innerHTML = '';
     const pathKeys = Object.keys(uniquePaths);
 
@@ -599,12 +609,14 @@ function generateDynamicTabs() {
         if (bestBadge) bestBadge.style.display = 'block';
         const singlePath = uniquePaths[pathKeys[0]];
         createRouteCard(singlePath, 'Best Route', allRoutesContainer, criteriaNames);
+        createRouteCard(singlePath, 'Best Route', floatContainer, criteriaNames);
     } else {
         if (bestBadge) bestBadge.style.display = 'none';
         pathKeys.forEach((pathKey, index) => {
             const pathData = uniquePaths[pathKey];
             const cardTitle = `Route ${index + 1}`;
             createRouteCard(pathData, cardTitle, allRoutesContainer, criteriaNames);
+            createRouteCard(pathData, cardTitle, floatContainer, criteriaNames);
         });
     }
 
@@ -731,6 +743,7 @@ async function queryAlternativeRoutes() {
         document.getElementById('altSummary').innerHTML =
             `🔍 Found <strong>${data.count}</strong> alternative route${data.count > 1 ? 's' : ''} (max ${maxConn} flights)`;
 
+        document.querySelector(".tab-btn.cheapest").click();
         renderAltRoutesList();
 
         if (altRoutesData.length > 0) {
@@ -756,22 +769,24 @@ window.sortAltRoutes = function (value, element) {
         altRoutesData.sort((a, b) => a.total_time - b.total_time);
     } else if (value === 'shortest') {
         altRoutesData.sort((a, b) => a.total_distance - b.total_distance);
+    } else if (value === 'fewest') {
+        altRoutesData.sort((a, b) => a.path.length - b.path.length);
     }
-
     renderAltRoutesList();
-
-    if (altRoutesData.length > 0) {
-        selectAltRoute(0);
-    }
 };
 
 function renderAltRoutesList() {
     const container = document.getElementById('altRoutesList');
+    if (!container) return;
     container.innerHTML = '';
+
+    const floatContainer = document.querySelector('div[value="panel-alternatives"] .box');
+    if (floatContainer) floatContainer.innerHTML = '';
 
     const minPrice = Math.min(...altRoutesData.map(r => r.total_price));
     const minTime = Math.min(...altRoutesData.map(r => r.total_time));
     const minDistance = Math.min(...altRoutesData.map(r => r.total_distance));
+    const minStops = Math.min(...altRoutesData.map(r => r.path.length));
 
     altRoutesData.forEach((route, idx) => {
         const card = document.createElement('div');
@@ -795,6 +810,10 @@ function renderAltRoutesList() {
             card.classList.add("shortest");
             typeHTML += `<div class="shortest"></div>`
         }
+        if (route.path.length === minStops) {
+            card.classList.add("fewest");
+            typeHTML += `<div class="fewest"></div>`
+        }
 
         card.innerHTML = `
             <div class="first"><div class="title">Route ${idx + 1}</div><div class="type">${typeHTML}</div></div>
@@ -803,9 +822,11 @@ function renderAltRoutesList() {
             <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
             <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
         `;
+
         container.appendChild(card);
+        const cardClone = card.cloneNode(true);
+        if (floatContainer) floatContainer.appendChild(cardClone);
     });
-    selectAltRoute(0);
 }
 
 function selectAltRoute(index) {
@@ -917,6 +938,9 @@ function renderBfsLevels(reachable) {
     const airport = extractAirportName(document.getElementById('bfsStart').value);
     container.innerHTML = '';
 
+    const floatContainer = document.querySelector("div[value=panel-reachability].floating .box");
+    if (floatContainer) floatContainer.innerHTML = '';
+
     const levelLabels = {
         1: 'Direct',
         2: '1 Stop',
@@ -924,6 +948,7 @@ function renderBfsLevels(reachable) {
         4: '3 Stops'
     };
 
+    document.querySelectorAll('.bfsControls div').forEach(p => p.style.display = "none");
     for (const level of Object.keys(reachable).sort()) {
         const controlBtn = document.querySelector(`.bfsControls .level-${level}`);
         if (controlBtn) controlBtn.style.display = "block";
@@ -932,10 +957,16 @@ function renderBfsLevels(reachable) {
         const group = document.createElement('div');
         group.classList.add('bfsGroup', `level-${level}`);
 
+        const floatGroup = document.createElement('div');
+        floatGroup.classList.add('result-card', `level-${level}`);
+
         const header = document.createElement('div');
         header.className = `title`;
         header.innerHTML = `${levelLabels[level]} flights from <span>${airport}</span>`;
         group.appendChild(header);
+
+        const headerClone = header.cloneNode(true);
+        floatGroup.appendChild(headerClone);
 
         const list = document.createElement('div');
         list.className = 'bfs-airport-list';
@@ -951,15 +982,35 @@ function renderBfsLevels(reachable) {
             };
             list.appendChild(chip);
         });
-
         group.appendChild(list);
+
+        const floatList = document.createElement('div');
+        floatList.className = 'bfs-airport-list';
+
+        airports.forEach(ap => {
+            const chip = document.createElement('span');
+            chip.className = 'bfs-airport-chip';
+            chip.textContent = ap.iata;
+            chip.title = ap.name;
+            chip.onclick = () => {
+                const coords = ap.coords;
+                if (coords) {
+                    map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
+                }
+            };
+            floatList.appendChild(chip);
+        });
+        floatGroup.appendChild(floatList);
 
         const footer = document.createElement('div');
         footer.className = `total`;
         footer.textContent = `Total: ${airports.length} ${level > 1 ? '' : 'direct '}airport${airports.length > 1 ? 's' : ''} ${level > 1 ? 'with ' + levelLabels[level] : ''}`;
         group.appendChild(footer);
+        const footerClone = footer.cloneNode(true);
+        floatGroup.appendChild(footerClone);
 
         container.appendChild(group);
+        if (floatContainer) floatContainer.appendChild(floatGroup);
     }
 }
 
@@ -1023,15 +1074,15 @@ function renderBfsMap(data) {
     }
 }
 
-function switchLevel(btn) {
+window.switchLevel = function (btn) {
     document.querySelectorAll('.bfsControls > div').forEach(d => d.classList.remove('selected'));
     btn.classList.add('selected');
 
-    const level = btn.classList[0];
+    const levelClass = btn.classList[0]; // e.g., level-1
     document.querySelectorAll('.bfsGroup').forEach(group => {
-        group.style.display = group.classList.contains(level) ? 'block' : 'none';
+        group.style.display = group.classList.contains(levelClass) ? 'block' : 'none';
     });
-}
+};
 
 window.queryReachability = queryReachability;
 
@@ -1182,3 +1233,71 @@ async function queryMultiCity() {
 }
 
 window.queryMultiCity = queryMultiCity;
+
+// ===================================================================
+// FLOATING PANEL
+// ===================================================================
+window.collapsePanel = function (element) {
+    const panelID = element.getAttribute("value");
+    let panel = document.getElementById(panelID);
+
+    if (element.classList.contains("collapse")) {
+        panel.classList.add("collapse");
+        element.classList.remove("collapse");
+        element.classList.add("expand");
+        element.querySelector("span").textContent = "Expand";
+
+        if (document.querySelector('div[value="' + panelID + '"].floating .box div') != null) {
+            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
+
+            document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
+            const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .result-card'))
+                .findIndex(div => div.classList.contains('selected'));
+
+            if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
+                if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
+            } else if (panelID == "panel-reachability") {
+                const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div'))
+                    .findIndex(div => div.classList.contains('selected'));
+                if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
+            }
+        } else if (panelID == "panel-multicity") {
+            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
+            document.querySelector('div[value="' + panelID + '"].floating .box').innerHTML = panel.querySelector("#multiCityResultArea").innerHTML;
+        }
+    }
+    else {
+        panel.classList.remove("collapse");
+        element.classList.add("collapse");
+        element.classList.remove("expand");
+        element.querySelector("span").textContent = "Collapse";
+        document.querySelector('div[value="' + panelID + '"].floating').classList.remove("active");
+
+        document.querySelectorAll('div[id="' + panelID + '"] .result-card').forEach(div => div.classList.remove('selected'));
+        const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
+            .findIndex(div => div.classList.contains('active'));
+
+        if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
+            if (index !== -1) document.querySelectorAll('div[id="' + panelID + '"] .result-card')[index].querySelector(".showRoute").click();
+        } else if (panelID == "panel-reachability") {
+            const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
+                .findIndex(div => div.classList.contains('active'));
+            if (index !== -1) document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div')[index].click();
+        }
+    }
+}
+
+window.floatCardControl = function (element, direction) {
+    const cards = Array.from(element.parentElement.querySelectorAll(".result-card"));
+    const activeIndex = cards.findIndex(c => c.classList.contains('active'));;
+
+    let newIndex = activeIndex + direction;
+    if (newIndex >= cards.length) newIndex = 0;
+    if (newIndex < 0) newIndex = cards.length - 1;
+
+    cards[activeIndex].classList.remove('active');
+    cards[newIndex].classList.add('active');
+
+    const showRoute = cards[newIndex].querySelector(".showRoute");
+    if (showRoute) showRoute.click();
+}
