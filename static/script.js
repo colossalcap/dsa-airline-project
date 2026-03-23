@@ -58,6 +58,9 @@ window.onload = async function () {
     await loadAirportOptions();
     setupInputListeners();
     setupDarkMode();
+    
+    // Initialize UI state
+    switchPanel('optimal');
 };
 
 // ===== DARK MODE SETUP =====

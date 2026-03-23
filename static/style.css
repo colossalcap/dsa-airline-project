@@ -112,14 +112,14 @@ input[list]::-webkit-calendar-picker-indicator {
     right: 20px;
     width: 380px;
     max-width: calc(100% - 40px);
-    max-height: calc(100% - 130px);
+    max-height: calc(100% - 100px);
     z-index: 10;
     overflow-y: auto;
     transform: translateX(0);
     transition: transform 0.5s ease, right 0.5s ease;
     background: white;
     border-radius: 24px;
-    padding: 24px;
+    padding: 24px   ;
 }
 
 .panel.collapse {
@@ -147,6 +147,7 @@ input[list]::-webkit-calendar-picker-indicator {
 .panel .input-item {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 .panel .input-row {
@@ -601,74 +602,546 @@ input[list]::-webkit-calendar-picker-indicator {
     color: white;
 }
 
-/* Special Combined Themes */
-/* (Skipping specific combinations for brevity, generic gradient handled in script if needed) */
+/* Result card - Type Cheapest & Fastest */
+.result-card.cheapest.fastest::before{
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247));
+}
 
-/* Alt Route controls */
-.alt-sort-controls .route-tabs {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
+.result-card.cheapest.fastest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.fastest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Shortest */
+.result-card.cheapest.shortest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0));
+}
+
+.result-card.cheapest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fewest */
+.result-card.cheapest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(27, 103, 246));
+}
+
+.result-card.cheapest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Shortest */
+.result-card.fastest.shortest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0));
+}
+
+.result-card.fastest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.fastest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Fewest */
+.result-card.fastest.fewest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(27, 103, 246));
+}
+
+.result-card.fastest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.fastest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Shortest & Fewest */
+.result-card.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.result-card.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Shortest */
+.result-card.cheapest.fastest.shortest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0));
+}
+
+.result-card.cheapest.fastest.shortest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.fastest.shortest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Fewest */
+.result-card.cheapest.fastest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246));
+}
+
+.result-card.cheapest.fastest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.fastest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Shortest & Fewest */
+.result-card.cheapest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.result-card.cheapest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Fastest & Shortest & Fewest */
+.result-card.fastest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
+}
+
+.result-card.fastest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.fastest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Result card - Type Cheapest & Fastest & Shortest & Fewest */
+.result-card.cheapest.fastest.shortest.fewest .type{
     flex-wrap: wrap;
 }
 
-.tab-btn {
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
+.result-card.cheapest.fastest.shortest.fewest::before {
+    background: linear-gradient(to bottom, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246));
 }
 
-/* BFS Styles */
+.result-card.cheapest.fastest.shortest.fewest .showRoute {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.2), rgb(168, 85, 247, 0.2), rgb(255, 107, 0, 0.2), rgb(27, 103, 246, 0.2)); 
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+.result-card.cheapest.fastest.shortest.fewest .showRoute:hover {
+    background-image: 
+        linear-gradient(to right, rgb(34, 197, 94), rgb(168, 85, 247), rgb(255, 107, 0), rgb(27, 103, 246)),
+        linear-gradient(to right, rgb(34, 197, 94, 0.3), rgb(168, 85, 247, 0.3), rgb(255, 107, 0, 0.3), rgb(27, 103, 246, 0.3));
+    -webkit-background-clip: text, border-box;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ===== Tabs ===== */
+.route-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 20px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.tab-btn i {
+    margin-right: 8px;
+}
+
+/* ===== FEATURE 1: Alternative Routes (DFS) ===== */
+#altResultArea,
+#bfsResultArea {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #9c9d9e;
+}
+
+.alt-sort-controls > p {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+#altResultArea > p,
+#bfsResultArea > p{
+    margin: 18px 0;
+    padding-top: 18px;
+    border-top: 1px solid #9c9d9e;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ===== FEATURE 2: Reachability Map (BFS) ===== */
+#bfsResultArea > p i {
+    color: rgb(27, 103, 246);
+    margin-right: 8px;
+}
+
 .bfsControls {
     display: flex;
-    gap: 8px;
+    color: rgb(107 114 128);
+    font-size: 14px;
+    font-weight: 500;
     margin-bottom: 20px;
 }
 
 .bfsControls > div {
-    flex: 1;
-    padding: 8px;
-    border-bottom: 2px solid #eee;
-    text-align: center;
+    border-bottom: 2px solid rgb(0, 0, 0, 0.2);
+    padding: 8px 0;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    color: #666;
+    text-align: center;
+    width: stretch;
+    display: none;
 }
 
-.bfsControls > div.selected {
-    border-bottom-color: #1B67F6;
-    color: #1B67F6;
+.bfsControls .level-1:hover {
+    border-color: rgb(27, 103, 246, 0.5);
+    color: rgb(27, 103, 246);
+}
+
+.bfsControls .level-1.selected {
+    border-color: rgb(27, 103, 246);
+    color: rgb(27, 103, 246);
+}
+
+.bfsControls .level-2:hover {
+    border-color: rgb(34, 197, 94, 0.5);
+    color: rgb(34, 197, 94);
+}
+
+.bfsControls .level-2.selected {
+    border-color: rgb(34, 197, 94);
+    color: rgb(34, 197, 94);
+}
+
+.bfsControls .level-3:hover {
+    border-color: rgb(168, 85, 247, 0.5);
+    color: rgb(168, 85, 247);
+}
+
+.bfsControls .level-3.selected {
+    border-color: rgb(168, 85, 247);
+    color: rgb(168, 85, 247);
+}
+
+.bfsControls .level-4:hover {
+    border-color: rgb(255, 107, 0, 0.5);
+    color: rgb(255, 107, 0);
+}
+
+.bfsControls .level-4.selected {
+    border-color: rgb(255, 107, 0);
+    color: rgb(255, 107, 0);
+}
+
+.bfsGroup:not(:first-child) {
+    display: none;
+}
+
+.bfsGroup .title {
+    color: rgb(75 85 99);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.bfsGroup .title span {
+    font-weight: 600;
+}
+
+.bfsGroup .title::before {
+    font-family: 'FontAwesome';
+    margin-right: 4px;
 }
 
 .bfs-airport-list {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
-.bfs-airport-chip {
-    padding: 4px 8px;
-    background: #f1f5f9;
-    border-radius: 20px;
+.bfs-airport-list span {
+    border-radius: 50px;
+    padding: 4px 6px;
     font-size: 12px;
+    font-weight: 600;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
-.bfs-airport-chip:hover {
-    background: #e2e8f0;
+.bfsGroup .total,
+div.floating[value="panel-reachability"] .result-card .total {
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgb(107 114 128);
+    text-align: center;
+}
+
+/* Level 1 */
+.level-1 .title::before {
+    content: '\f058';
+    color: rgb(27, 103, 246);
+}
+
+.level-1 .title span {
+    color: rgb(27, 103, 246);
+}
+
+.level-1 .bfs-airport-list span {
+    background: rgb(27, 103, 246, 0.2);
+    color: rgb(27, 103, 246);
+}
+
+/* Level 2 */
+.level-2 .title::before {
+    content: '\f058';
+    color: rgb(34, 197, 94);
+}
+
+.level-2 .title span {
+    color: rgb(34, 197, 94);
+}
+
+.level-2 .bfs-airport-list span {
+    background: rgb(34, 197, 94, 0.2);
+    color: rgb(34, 197, 94);
+}
+
+/* Level 3 */
+.level-3 .title::before {
+    content: '\f058';
+    color: rgb(168, 85, 247);
+}
+
+.level-3 .title span {
+    color: rgb(168, 85, 247);
+}
+
+.level-3 .bfs-airport-list span {
+    background: rgb(3168, 85, 247, 0.2);
+    color: rgb(168, 85, 247);
+}
+
+/* Level 4 */
+.level-4 .title::before {
+    content: '\f058';
+    color: rgb(255, 107, 0);
+}
+
+.level-4 .title span {
+    color: rgb(255, 107, 0);
+}
+
+.level-4 .bfs-airport-list span {
+    background: rgb(255, 107, 0, 0.2);
+    color: rgb(255, 107, 0);
+}
+
+/* ===== Fading Animations for Map Elements ===== */
+.premium-marker,
+path.leaflet-interactive {
+    transition: opacity 0.3s ease-out !important;
+}
+
+.fade-out-layer {
+    opacity: 0 !important;
+}
+
+/* ===== Markers ===== */
+.premium-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid white;
+    font-size: 16px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.marker-start {
+    height: 36px;
+    width: 36px;
+    background: rgb(27, 103, 246);
+    color: white;
+    position: relative;
+    bottom: 5px;
+    right: 30px;
+}
+
+.marker-start .fa {
+    margin-top: 3px;
+}
+
+.marker-end {
+    height: 36px;
+    width: 36px;
+    background: rgb(34, 197, 94);
+    color: white;
+    position: relative;
+    bottom: 20px;
+    right: 20px;
+}
+
+.marker-end .fa {
+    transform: rotate(80deg);
+}
+
+.marker-layover {
+    height: 35px;
+    width: 35px;
+    color: rgb(255, 107, 0);
+    font-size: 32px;
+    font-weight: bold;
+    position: relative;
+    right: 2px;
+    bottom: 32px;
+}
+
+/* ===== BFS Marker Colors ===== */
+.marker-bfs-center {
+    background: #FFB81C;
+    color: #001A4D;
+    font-weight: bold;
+}
+
+.marker-bfs-1 {
+    background: rgb(27, 103, 246);
+    color: white;
+}
+
+.marker-bfs-2 {
+    background: rgb(34, 197, 94);
+    color: white;
+}
+
+.marker-bfs-3 {
+    background: rgb(168, 85, 247);
+    color: white;
+}
+
+.marker-bfs-4 {
+    background: rgb(255, 107, 0);
+    color: white;
 }
 
 /* Collapse Button */
 .collapseBtn,
 .floating .button {
     background: rgb(205 223 255);
-    color: rgb(1b 67 f6);
+    color: rgb(27, 103, 246, 0.8);
     font-size: 18px;
     height: 40px;
     width: 40px;
@@ -679,66 +1152,86 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 .collapseBtn {
-    position: fixed;
-    right: 20px;
+    background: rgb(205 223 255);
+    color: rgb(27, 103, 246, 0.8);
+    font-size: 18px;
+    height: 40px;
+    width: 40px;
+    border-radius: 100%;
+    position: relative;
+    display: inline-block;
+    left: 94.5%;
     z-index: 200;
     margin-top: 2%;
     transition: transform 0.5s;
-    display: none;
 }
 
 .collapseBtn i {
-    margin: 0;
+    margin: 0 0 4px 1px;
 }
 
 .collapseBtn .tooltip {
     visibility: hidden;
     width: 90px;
-    background-color: #1b67f6;
-    color: white;
+    background-color: rgb(198 217 253);
+    color: rgb(27, 103, 246);
     text-align: center;
     padding: 5px 0;
     border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.collapseBtn.collapse .tooltip {
     position: absolute;
     right: 120%;
-    top: 5px;
-    font-size: 14px;
-    z-index: 1;
+    bottom: 15%;
+}
+
+.collapseBtn.expand .tooltip {
+    position: absolute;
+    right: -245%;
+    bottom: 10%;
+    rotate: 180deg;
+}
+
+.collapseBtn .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgb(198 217 253);
 }
 
 .collapseBtn:hover .tooltip {
     visibility: visible;
-}
+} 
 
 .collapseBtn.expand {
-    transform: rotate(180deg);
+   transform: rotate(180deg);
 }
 
 /* Floating Panel */
 .floating {
-    position: fixed;
-    top: 100px;
-    right: 80px;
-    display: none;
+    position: absolute;
+    top: 80px;
+    right: 100px;
+    display: flex;
     align-items: center;
-    z-index: 150;
-    background: white;
-    padding: 10px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none; 
 }
 
 .floating.active {
     display: flex;
 }
 
-.floating .box {
-    margin: 0 10px;
-}
-
 .floating .result-card {
-    margin-bottom: 0;
-    box-shadow: none;
+    background: white;
+    margin: 0 8px;
+    width: 320px;
     display: none;
 }
 
@@ -746,22 +1239,36 @@ input[list]::-webkit-calendar-picker-indicator {
     display: block;
 }
 
-/* Markers */
-.premium-marker {
-    display: flex;
+.floating .result-card .showRoute {
+    display: none;
+}
+
+div.floating[value="panel-reachability"] .result-card {
+    width: auto;
+}
+
+div.floating[value="panel-reachability"] .result-card .title {
+    font-size: 14px;
+    font-weight: 400;
+    width: 320px;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    margin-bottom: 12px;
+    display: block;
 }
 
-.marker-bfs-center {
-    background: #FFB81C;
-    color: #001A4D;
-    font-weight: bold;
+div.floating[value="panel-reachability"] .result-card .title:before {
+    font-family: 'FontAwesome';
+    content: '\f058';
+    margin-right: 8px;
 }
 
-/* Dark Mode Theme */
+div.floating[value="panel-reachability"] .result-card .bfs-airport-list {
+    max-height: 88px;
+}
+
+/* ===================================================================
+   DARK MODE THEME
+=================================================================== */
 body.dark-mode {
     background-color: #121212;
     color: #e0e0e0;
@@ -769,12 +1276,29 @@ body.dark-mode {
 
 body.dark-mode .header {
     background: #1e1e1e;
+    box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.5);
 }
 
-body.dark-mode .panel,
-body.dark-mode .floating {
+body.dark-mode .panel {
     background: #1e1e1e;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .panel .title p:first-child,
+body.dark-mode .panel .title p:last-child,
+body.dark-mode .panel .input-row label,
+body.dark-mode .result > p,
+body.dark-mode #altResultArea > p,
+body.dark-mode #bfsResultArea > p,
+body.dark-mode .alt-sort-controls > p {
     color: #e0e0e0;
+}
+
+body.dark-mode .panel .input-item input,
+body.dark-mode .panel .input-item select {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #444;
 }
 
 body.dark-mode .result-card {
@@ -782,20 +1306,45 @@ body.dark-mode .result-card {
     color: #e0e0e0;
 }
 
+body.dark-mode .result-card.selected {
+    background: #3d3d3d;
+}
+
 body.dark-mode .summary {
-    background: rgba(27, 103, 246, 0.2);
+    background: linear-gradient(135deg, #1b65f833 0%, #00968933 100%);
+    border: 1px solid #1b67f6;
     color: #90caf9;
 }
 
-body.dark-mode .leaflet-layer {
+body.dark-mode .tab-btn {
+    background: #2d2d2d;
+    color: #bbb;
+}
+
+/* SMART MAP INVERSION TRICK FOR DARK MODE */
+body.dark-mode .leaflet-layer,
+body.dark-mode .leaflet-control-zoom-in,
+body.dark-mode .leaflet-control-zoom-out,
+body.dark-mode .leaflet-control-attribution {
     filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
-/* Mobile Responsiveness */
+/* ===================================================================
+   MOBILE RESPONSIVENESS
+=================================================================== */
 @media screen and (max-width: 780px) {
     .header {
         flex-direction: column;
-        padding: 15px;
+        gap: 12px;
+        align-items: center;
+        min-width: 560px;
+        min-width: 100%;
+        padding: 10px;
+    }
+    
+    .header .assist .features {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .panel {
@@ -804,11 +1353,25 @@ body.dark-mode .leaflet-layer {
         right: 0;
         width: 100%;
         max-width: 100%;
-        max-height: 50vh;
-        border-radius: 20px 20px 0 0;
+        max-height: 55vh; 
+        border-radius: 24px 24px 0 0;
+        padding: 20px 15px;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
     }
 
-    .floating, .collapseBtn {
-        display: none !important;
+    .leaflet-top {
+        top: 150px; 
+    }
+
+    .panel .action-row {
+        flex-direction: column;
+    }
+
+    .clear-btn {
+        width: 100%;
+    }
+
+    .bfs-airport-list {
+        grid-template-columns: repeat(3, 1fr);
     }
 }

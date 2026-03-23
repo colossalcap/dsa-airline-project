@@ -14,6 +14,7 @@
 
 <body>
 
+    <!-- Header -->
     <div class="header">
         <div class="title">
             <div class="circle"><i class="fa fa-plane"></i></div>
@@ -37,17 +38,21 @@
         </div>
     </div>
 
+    <!-- Background Map -->
     <div class="map-card">
         <div id="map"></div>
     </div>
 
+    <!-- First Panel -->
     <div class="panel" id="panel-optimal">
 
+        <!-- Title -->
         <div class=" title">
             <p><i class="fa fa-plane"></i>Search Flight</p>
             <p>Discover flight paths easily</p>
         </div>
 
+        <!-- Dropdown -->
         <div class="input-row">
             <div class="input-item">
                 <label for="startAirport">From</label>
@@ -71,6 +76,7 @@
 
         <datalist id="airportList"></datalist>
 
+        <!-- Action button -->
         <div class="action-row">
             <button class="search-btn" onclick="queryShortestRoute()"><i class="fa fa-search"></i>Search
                 Flights</button>
@@ -79,6 +85,7 @@
             </button>
         </div>
 
+        <!-- Loading Bar -->
         <div class="loading-bar" id="optimal-loading" style="display: none;">
             <div class="loading-bar-track">
                 <div class="loading-bar-fill"></div>
@@ -87,6 +94,7 @@
         </div>
         <div class="error-msg" id="errorMsg"></div>
 
+        <!-- Result -->
         <div class="result" id="resultCard" style="display: none;">
             <p>Recommended Routes</p>
 
@@ -98,13 +106,16 @@
         </div>
     </div>
 
+    <!-- Second Panel -->
     <div class="panel" id="panel-alternatives" style="display: none;">
 
+        <!-- Title -->
         <div class="title">
             <p><i class="fa fa-exchange"></i>Alternative Routes</p>
             <p>Find all possible routes between two airports using Yen's Algorithm</p>
         </div>
 
+        <!-- Dropdown -->
         <div class="input-row">
 
             <div class="input-item">
@@ -145,6 +156,7 @@
 
         </div>
 
+        <!-- Action button -->
         <div class="action-row">
             <button class="search-btn" onclick="queryAlternativeRoutes()" style="flex: 1;">Find All Routes</button>
             <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
@@ -152,6 +164,7 @@
             </button>
         </div>
 
+        <!-- Loading Bar -->
         <div class="loading-bar" id="alt-loading" style="display: none;">
             <div class="loading-bar-track">
                 <div class="loading-bar-fill"></div>
@@ -160,6 +173,7 @@
         </div>
         <div class="error-msg" id="altErrorMsg"></div>
 
+        <!-- Result Box -->
         <div id="altResultArea" style="display: none;">
             <div class="summary" id="altSummary"></div>
 
@@ -173,7 +187,7 @@
                     <div class="tab-btn shortest" onclick="sortAltRoutes('shortest', this)"><i
                             class="fa fa-bolt"></i>Shortest</div>
                     <div class="tab-btn fewest" onclick="sortAltRoutes('fewest', this)"><i
-                            class="fa fa-exchange"></i>Fewer Stop</div>
+                            class="fa fa-exchange"></i>Fewer Stops</div>
                 </div>
             </div>
 
@@ -183,16 +197,19 @@
         </div>
     </div>
 
+    <!-- Third Panel -->
     <div class="panel" id="panel-reachability" style="display: none;">
 
+        <!-- Title -->
         <div class="title">
             <p><i class="fa fa-globe"></i>Where Can I Go?</p>
             <p>Discover all reachable airports from your starting point using BFS (Breadth-First Search)</p>
         </div>
 
+        <!-- Dropdown -->
         <div class="input-row">
             <div class="input-item">
-                <label for="bfsStart">From</label>
+                <label for="altStart">From</label>
                 <div class="list">
                     <i class="fa fa-map-marker"></i>
                     <input type="text" id="bfsStart" list="airportList" autocomplete="off"
@@ -201,13 +218,13 @@
                 </div>
             </div>
 
-            <div class="input-item">
-                <label for="maxStops">Max Number of Flights</label>
+            <div class="input-item"">
+                <label for=" maxStops">Max Number of Flights</label>
                 <div class="list">
                     <i class="fa fa-map-marker"></i>
                     <select id="maxStops">
                         <option value="1">1 flight</option>
-                        <option value="2" selected>2 flights</option>
+                        <option value="2" selected="">2 flights</option>
                         <option value="3">3 flights</option>
                         <option value="4">4 flights</option>
                     </select>
@@ -216,6 +233,7 @@
             </div>
         </div>
 
+        <!-- Action button -->
         <div class="action-row">
             <button class="search-btn" onclick="queryReachability()" style="flex: 1;">Explore Reachability</button>
             <button class="clear-btn" onclick="clearAllInputs()" title="Clear Inputs">
@@ -223,11 +241,12 @@
             </button>
         </div>
 
+        <!-- Loading Bar -->
         <div class="loading-bar" id="bfs-loading" style="display: none;">
             <div class="loading-bar-track">
                 <div class="loading-bar-fill"></div>
             </div>
-            <span class="loading-text">Running BFS...</span>
+            <span class="loading-text">Running BFS from MLG (max 3 flights) ...</span>
         </div>
         <div class="error-msg" id="bfsErrorMsg" style="display: none;"></div>
 
