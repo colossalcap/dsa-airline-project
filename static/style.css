@@ -1264,7 +1264,7 @@ path.leaflet-interactive {
 .floating {
     position: absolute;
     top: 80px;
-    right: 150px;
+    right: 140px;
     display: flex;
     align-items: center;
     display: none;
