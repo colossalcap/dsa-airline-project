@@ -453,9 +453,24 @@ function renderMap(data) {
     let currentLegIndex = 0;
     let stopNumber = 1;
 
+    let prevLng = null;
+
     path.forEach((iata, index) => {
         const fullName = path_names[index];
-        const [lat, lng] = coords[iata];
+        let [lat, lng] = coords[iata];
+
+        if (prevLng !== null) {
+            let diff = lng - prevLng;
+            while (diff > 180) {
+                lng -= 360;
+                diff = lng - prevLng;
+            }
+            while (diff < -180) {
+                lng += 360;
+                diff = lng - prevLng;
+            }
+        }
+        prevLng = lng;
 
         let renderLat = lat;
         let renderLng = lng;
@@ -712,70 +727,6 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
     });
 }
 
-function renderMap(data) {
-    const { path, path_names, coords } = data;
-    const latlngs = [];
-
-    let prevLng = null;
-
-    path.forEach((iata, index) => {
-        const fullName = path_names[index];
-        let [lat, lng] = coords[iata];
-
-        if (prevLng !== null) {
-            let diff = lng - prevLng;
-            while (diff > 180) {
-                lng -= 360;
-                diff = lng - prevLng;
-            }
-            while (diff < -180) {
-                lng += 360;
-                diff = lng - prevLng;
-            }
-        }
-        prevLng = lng;
-
-        latlngs.push([lat, lng]);
-
-        let markerHtml = '';
-        let popupText = '';
-
-        if (index === 0) {
-            markerHtml = `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`;
-            popupText = `<b>${fullName}</b><br>Departure Airport`;
-        } else if (index === path.length - 1) {
-            markerHtml = `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`;
-            popupText = `<b>${fullName}</b><br>Arrival Airport`;
-        } else {
-            markerHtml = `<div class="marker-layover"><i class="fa fa-map-marker"></i></div>`;
-            popupText = `<b>${fullName}</b><br>Layover`;
-        }
-
-        const marker = L.marker([lat, lng], {
-            icon: L.divIcon({ html: markerHtml, className: '' })
-        }).addTo(map).bindPopup(popupText);
-
-        markers.push(marker);
-    });
-
-    if (typeof L.polyline.antPath === 'function') {
-        routeLine = L.polyline.antPath(latlngs, {
-            "delay": 400,
-            "dashArray": [15, 30],
-            "weight": 5,
-            "color": "#00E5FF",
-            "pulseColor": "#001A4D",
-            "paused": false,
-            "reverse": false,
-            "hardwareAccelerated": true
-        }).addTo(map);
-    } else {
-        routeLine = L.polyline(latlngs, { color: '#00E5FF', weight: 4 }).addTo(map);
-    }
-
-    routeLine.bindPopup(`<b>Optimal Route</b><br>Distance: ${data.total_distance}km<br>Price: $${data.total_price}`);
-    map.fitBounds(latlngs, { padding: [50, 50] });
-}
 
 
 // ===================================================================
