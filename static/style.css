@@ -40,7 +40,13 @@ button.active {
     font-size: 14px;
     text-align: center;
     border: 1px solid #bbdefb;
+    margin-bottom: 16px
 }
+
+#panel-multicity .summary {
+    margin: 0;
+}
+
 
 input[list]::-webkit-calendar-picker-indicator {
     display: none !important;
