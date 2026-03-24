@@ -539,9 +539,25 @@ function renderMap(data) {
     const { path, path_names, coords } = data;
     const latlngs = [];
 
+    let prevLng = null;
+
     path.forEach((iata, index) => {
         const fullName = path_names[index];
-        const [lat, lng] = coords[iata];
+        let [lat, lng] = coords[iata];
+
+        if (prevLng !== null) {
+            let diff = lng - prevLng;
+            while (diff > 180) {
+                lng -= 360;
+                diff = lng - prevLng;
+            }
+            while (diff < -180) {
+                lng += 360;
+                diff = lng - prevLng;
+            }
+        }
+        prevLng = lng;
+
         latlngs.push([lat, lng]);
 
         let markerHtml = '';
