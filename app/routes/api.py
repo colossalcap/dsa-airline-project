@@ -1,60 +1,58 @@
-from flask import Blueprint, render_template, request, jsonify
-from utils.data_store import flight_graph, airport_names, coords_dict
-from utils.algorithms import (
-    quick_sort, find_optimal_route,
-    find_alternative_routes_yens, find_reachable_airports_bfs,
-    plan_multi_city_route
-)
+from flask import Blueprint, request, jsonify
+from app.services.data_store import flight_graph, airport_names, coords_dict
+from app.services.sorting import quick_sort
+from app.services.dijkstra import find_optimal_route
+from app.services.yen import find_alternative_routes_yens
+from app.services.bfs import find_reachable_airports_bfs
+from app.services.multi_city import plan_multi_city_route
 
-main_bp = Blueprint('main', __name__)
+api_bp = Blueprint('api', __name__)
 
-@main_bp.route('/')
-def index():
-    return render_template('home.html')
 
-@main_bp.route('/api/get_shortest_route', methods=['POST'])
+@api_bp.route('/api/get_shortest_route', methods=['POST'])
 def get_shortest_route():
     data = request.get_json() or {}
     start = (data.get('start') or '').upper()
     end = (data.get('end') or '').upper()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"[API] /api/get_shortest_route -- {start} -> {end}")
-    print("="*60)
-    
+    print("=" * 60)
+
     if start not in airport_names or end not in airport_names:
         return jsonify({"code": 0, "msg": "Airport IATA not exists!"})
     if start == end:
         return jsonify({"code": 0, "msg": "Departure and arrival cannot be the same!"})
-    
+
     routes_data = {}
     criteria_list = ['time', 'distance', 'price', 'connections']
-    
+
     for crit in criteria_list:
         path, tot_time, tot_dist, tot_price = find_optimal_route(start, end, crit)
         if path:
             routes_data[crit] = {
-                "path": path,  
+                "path": path,
                 "path_names": [airport_names[iata] for iata in path],
-                "total_time": tot_time, 
+                "total_time": tot_time,
                 "total_distance": tot_dist,
                 "total_price": tot_price,
                 "coords": {iata: coords_dict[iata] for iata in path}
             }
-            
+
     if not routes_data:
         return jsonify({"code": 0, "msg": "No route found between these airports!"})
-    
+
     return jsonify({"code": 1, "routes": routes_data})
 
-@main_bp.route('/api/airport_options')
+
+@api_bp.route('/api/airport_options')
 def get_airport_options():
     try:
         options = []
         for iata, name in airport_names.items():
             lat, lng = coords_dict.get(iata, (0, 0))
             options.append({
-                "value": iata, 
+                "value": iata,
                 "text": name,
                 "lat": lat,
                 "lng": lng
@@ -65,8 +63,7 @@ def get_airport_options():
         return jsonify({"code": 0, "msg": "Failed to load airports"})
 
 
-
-@main_bp.route('/api/alternative_routes', methods=['POST'])
+@api_bp.route('/api/alternative_routes', methods=['POST'])
 def get_alternative_routes():
     data = request.get_json() or {}
     start = (data.get('start') or '').upper()
@@ -95,7 +92,8 @@ def get_alternative_routes():
 
     return jsonify({"code": 1, "routes": routes, "count": len(routes)})
 
-@main_bp.route('/api/reachability', methods=['POST'])
+
+@api_bp.route('/api/reachability', methods=['POST'])
 def get_reachability():
     data = request.get_json() or {}
     start = (data.get('start') or '').upper()
@@ -129,31 +127,32 @@ def get_reachability():
         "start_coords": coords_dict.get(start, (0, 0))
     })
 
-@main_bp.route('/api/multi_city', methods=['POST'])
+
+@api_bp.route('/api/multi_city', methods=['POST'])
 def get_multi_city_route():
     data = request.get_json() or {}
     itinerary_raw = data.get('itinerary', [])
-    
+
     if len(itinerary_raw) < 2:
         return jsonify({"code": 0, "msg": "Need at least 2 destinations to plan a route."})
-        
+
     for ap in itinerary_raw:
         if ap not in airport_names:
             return jsonify({"code": 0, "msg": f"Airport IATA '{ap}' not found in graph!"})
-            
+
     path, tot_time, tot_dist, tot_price = plan_multi_city_route(itinerary_raw, criteria='price')
-    
+
     if not path:
         return jsonify({"code": 0, "msg": "Could not find a valid continuous route connecting all these cities."})
-        
+
     route_data = {
-        "path": path,  
+        "path": path,
         "path_names": [airport_names.get(iata, iata) for iata in path],
-        "total_time": tot_time, 
+        "total_time": tot_time,
         "total_distance": tot_dist,
         "total_price": tot_price,
-        "coords": {iata: coords_dict.get(iata, (0,0)) for iata in path},
+        "coords": {iata: coords_dict.get(iata, (0, 0)) for iata in path},
         "requested_stops": itinerary_raw
     }
-    
+
     return jsonify({"code": 1, "route": route_data})

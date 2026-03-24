@@ -8,23 +8,35 @@ A Flask-based web application that finds optimal flight routes between airports 
 
 ```
 dsa-airline-project/
-├── main.py                  # Application entry point (starts the Flask server)
-├── routes.py                # Flask API route definitions
-├── requirements.txt         # Python dependencies
-├── test_algorithms.py       # Pytest test suite for all algorithms
+├── main.py                       # Entry point (calls the app factory)
+├── requirements.txt
+├── README.md
+├── app/                          # Flask application package
+│   ├── __init__.py               # App factory: create_app()
+│   ├── routes/                   # Route handlers
+│   │   ├── __init__.py           # Blueprint registration
+│   │   ├── main.py               # Home page route (/)
+│   │   └── api.py                # All /api/* endpoints
+│   ├── services/                 # Core DSA logic
+│   │   ├── __init__.py
+│   │   ├── data_store.py         # Data loading & graph storage
+│   │   ├── sorting.py            # QuickSort
+│   │   ├── dijkstra.py           # Dijkstra's Algorithm
+│   │   ├── yen.py                # Yen's K-Shortest Paths
+│   │   ├── bfs.py                # BFS Reachability
+│   │   └── multi_city.py         # Multi-city route planning
+│   ├── templates/
+│   │   └── home.html             # Frontend HTML page
+│   └── static/
+│       ├── script.js             # Frontend JavaScript
+│       ├── style.css             # Frontend styles
+│       └── map/                  # Leaflet map assets
+|
+├── scripts/
+│   └── setup_run.py              # Dependency checker & launcher
 ├── data/
-│   └── airline_routes.json  # Airport and route dataset
-├── utils/
-│   ├── __init__.py
-│   ├── algorithms.py        # Core DSA implementations
-│   └── data_store.py        # Data loading and global graph storage
-├── templates/
-│   └── home.html            # Frontend HTML page
-├── static/
-│   ├── script.js            # Frontend JavaScript logic
-│   ├── style.css            # Frontend styles
-│   └── map/                 # Map-related static assets
-└── venv/                    # Python virtual environment (not committed)
+│   └── airline_routes.json       # Airport and route dataset
+└── venv/                         # Virtual environment (not committed)
 ```
 
 ---
