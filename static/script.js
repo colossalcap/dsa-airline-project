@@ -645,6 +645,7 @@ function generateDynamicTabs() {
     const bestBadge = document.getElementById('bestOverallBadge');
     const allRoutesContainer = document.getElementById('result-box');
     const floatContainer = document.querySelector('div[value="panel-optimal"].floating .box');
+    floatContainer.innerHTML = '';
     allRoutesContainer.innerHTML = '';
     const pathKeys = Object.keys(uniquePaths);
 
