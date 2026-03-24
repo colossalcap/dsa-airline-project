@@ -712,8 +712,6 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
     });
 }
 
-<<<<<<< HEAD
-=======
 function renderMap(data) {
     const { path, path_names, coords } = data;
     const latlngs = [];
@@ -780,7 +778,6 @@ function renderMap(data) {
 }
 
 
->>>>>>> 1925
 // ===================================================================
 // PANEL 2: ALTERNATIVE ROUTES
 // ===================================================================
