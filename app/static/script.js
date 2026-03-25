@@ -186,8 +186,8 @@ window.switchPanel = function (panelId) {
     const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
     if (btn) btn.classList.add('active');
 
-    const collpaseBtn = document.querySelector('div[value="panel-' + panelId + '"]');
-    if (collpaseBtn) collpaseBtn.style.display = 'block';
+    const collapseBtn = document.querySelector('div[value="panel-' + panelId + '"]');
+    if (collapseBtn) collapseBtn.style.display = 'block';
 
     const collapseExpanded = document.querySelector('div[value="panel-' + panelId + '"].expand');
     if (collapseExpanded) {
@@ -435,8 +435,20 @@ window.setMapSelection = function (inputId) {
 }
 
 function extractIATA(str) {
+    if (!str) return "";
     const match = str.match(/\(([A-Z]{3})\)/);
-    return match ? match[1] : str.substring(0, 3).toUpperCase();
+    if (match) return match[1];
+
+    // If it's already a 3-letter uppercase string, assume it's an IATA
+    if (str.length === 3 && /^[A-Z]+$/.test(str)) return str;
+
+    // Last resort: check if it matches a known airport text
+    if (typeof globalAirports !== 'undefined') {
+        const found = globalAirports.find(ap => ap.text === str);
+        if (found) return found.value; // value is the IATA
+    }
+
+    return str.substring(0, 3).toUpperCase();
 }
 
 function extractAirportName(str) {
@@ -1341,7 +1353,7 @@ function renderBfsLevels(reachable) {
             chip.title = ap.name;
             chip.onclick = () => {
                 const coords = ap.coords;
-                if (coords) {
+                if (coords && coords[0] !== 0 && coords[1] !== 0) {
                     map.flyTo([coords[0], coords[1]], 6, { duration: 1.0 });
                 }
             };
@@ -1687,7 +1699,17 @@ window.floatCardControl = function (element, direction) {
                         btn.click();
                         // If we are in details mode, RE-TRIGGER showRouteDetails to update the timeline!
                         if (activePanel === 'details') {
-                            const routeData = panelID === 'panel-optimal' ? currentRoutesData[newIndex === 0 ? 'time' : (newIndex === 1 ? 'distance' : 'price')] : altRoutesData[newIndex];
+                            let routeData = null;
+                            if (panelID === 'panel-optimal') {
+                                // Find criteria by looking at the card's classes
+                                const activeCard = cards[newIndex];
+                                const criteria = ['time', 'distance', 'price', 'fewest'].find(c => activeCard.classList.contains(c));
+                                if (criteria === 'fewest') routeData = currentRoutesData['connections'];
+                                else if (criteria) routeData = currentRoutesData[criteria];
+                            } else if (panelID === 'panel-alternatives') {
+                                routeData = altRoutesData[newIndex];
+                            }
+                            
                             if (routeData) showRouteDetails(routeData);
                         }
                     }
