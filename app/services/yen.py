@@ -41,7 +41,18 @@ def find_alternative_routes_yens(start, end, max_connections=3, K=10):
 
             ignored_nodes = set(root_path[:-1])
 
-            spur_path, _, _, _ = dijkstra_for_yens(spur_node, end, ignored_nodes, ignored_edges, criteria='price')
+            # Calculate root path costs once for this spur branch
+            root_time, root_dist, root_price = 0, 0.0, 0.0
+            for j in range(len(root_path) - 1):
+                u, v = root_path[j], root_path[j + 1]
+                for neighbor, dur, dist, price in flight_graph.get(u, []):
+                    if neighbor == v:
+                        root_time += dur
+                        root_dist += dist
+                        root_price += price
+                        break
+
+            spur_path, s_time, s_dist, s_price = dijkstra_for_yens(spur_node, end, ignored_nodes, ignored_edges, criteria='price')
 
             if spur_path:
                 total_path = root_path[:-1] + spur_path
@@ -49,35 +60,20 @@ def find_alternative_routes_yens(start, end, max_connections=3, K=10):
                 if len(total_path) - 2 > max_connections:
                     continue
 
-                t_time, t_dist, t_price = 0, 0.0, 0.0
-                valid_path = True
+                t_time = root_time + s_time
+                t_dist = root_dist + s_dist
+                t_price = root_price + s_price
 
-                for j in range(len(total_path) - 1):
-                    u = total_path[j]
-                    v = total_path[j + 1]
-                    edge_found = False
-                    for neighbor, dur, dist, price in flight_graph.get(u, []):
-                        if neighbor == v:
-                            t_time += dur
-                            t_dist += dist
-                            t_price += price
-                            edge_found = True
-                            break
-                    if not edge_found:
-                        valid_path = False
-                        break
-
-                if valid_path:
-                    path_tuple = tuple(total_path)
-                    if path_tuple not in B_paths:
-                        B.append({
-                            "path": total_path,
-                            "total_time": t_time,
-                            "total_distance": round(t_dist, 2),
-                            "total_price": round(t_price, 2),
-                            "cost": t_price
-                        })
-                        B_paths.add(path_tuple)
+                path_tuple = tuple(total_path)
+                if path_tuple not in B_paths:
+                    B.append({
+                        "path": total_path,
+                        "total_time": t_time,
+                        "total_distance": round(t_dist, 2),
+                        "total_price": round(t_price, 2),
+                        "cost": t_price
+                    })
+                    B_paths.add(path_tuple)
 
         if not B:
             break
