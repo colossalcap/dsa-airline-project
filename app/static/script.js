@@ -55,6 +55,13 @@ function hideLoading(panelId) {
     if (bar) bar.style.display = 'none';
 }
 
+window.recenterMap = function () {
+    if (map) {
+        // Flies back to the exact coordinates and zoom level from your initMap function
+        map.flyTo([20, 0], 3, { duration: 1.5 });
+    }
+};
+
 window.onload = async function () {
     initMap();
     await loadAirportOptions();
@@ -1522,8 +1529,8 @@ async function queryMultiCity() {
                     let end = currentLegPath[currentLegPath.length - 1];
                     let layovers = currentLegPath.slice(1, -1);
 
-                    pathHtml += `<div style="margin-bottom: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">`;
-                    pathHtml += `<div style="font-weight: 800; color: #1e293b; font-size: 14px;">Leg ${legCount}: <span style="color: #22c55e;">${start}</span> <i class="fa fa-long-arrow-right" style="color: #94a3b8; margin: 0 5px;"></i> <span style="color: #3b82f6;">${end}</span></div>`;
+                    pathHtml += `<div style="margin-bottom: 8px; padding: 10px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.2);">`;
+                    pathHtml += `<div style="font-weight: 800; font-size: 14px; margin-bottom: 4px;">Leg ${legCount}: <span style="color: #22c55e;">${start}</span> <i class="fa fa-long-arrow-right" style="color: #94a3b8; margin: 0 5px;"></i> <span style="color: #3b82f6;">${end}</span></div>`;
 
                     if (layovers.length > 0) {
                         pathHtml += `<div style="font-size: 12px; color: #64748b; margin-top: 4px;"><i class="fa fa-circle-o" style="margin-right:4px;"></i> Layovers: ${layovers.join(' &rarr; ')}</div>`;
@@ -1542,33 +1549,31 @@ async function queryMultiCity() {
                 pathHtml = `<div style="margin-bottom: 8px; font-size: 14px; text-align: left;">${path.join(' &rarr; ')}</div>`;
             }
 
-            // 2. Wrap it in a .result-card .selected so your floating panels recognize it!
             area.innerHTML = `
-                <div class="result-card selected" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; margin: 0;">
+                <div class="result-card selected" style="border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; text-align: left; margin: 0;">
                     
                     <div class="first" style="display:none;"><div class="title">Multi-City Planner</div></div>
                     
-                    <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
+                    <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
                     
                     ${pathHtml}
                     
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(148, 163, 184, 0.3); display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="margin-bottom: 4px; font-size: 13px; color: #64748b;"><b>Total Distance:</b> ${total_distance.toLocaleString()} km</div>
-                            <div style="font-size: 13px; color: #64748b;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
+                            <div style="margin-bottom: 4px; font-size: 13px; color: #94a3b8;"><b>Total Distance:</b> ${total_distance.toLocaleString()} km</div>
+                            <div style="font-size: 13px; color: #94a3b8;"><b>Total Airtime:</b> ${hour}h ${min}m</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold;">Est. Price</div>
-                            <div style="color: #059669; font-weight: 900; font-size: 20px;">$${total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Est. Price</div>
+                            <div style="color: #10B981; font-weight: 900; font-size: 20px;">$${total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
                     
                     <div class="action-buttons" style="margin-top: 15px; display: block;">
                         <button class="search-btn showDetails" onclick="showRouteDetails(currentMultiCityRoute, 'panel-multicity')" style="width: 100%; height: 40px;">
-                            <i class="fa fa-list"></i> View More Details
+                            <i class="fa fa-list"></i> More Details
                         </button>
                     </div>
-
                 </div>
             `;
             area.style.display = 'block';
