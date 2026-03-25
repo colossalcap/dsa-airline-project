@@ -7,6 +7,7 @@ let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
 let activePanel = 'optimal'; // Tracks the currently active tab
 let originalPanelForDetails = 'optimal'; // Tracks where we came from
+let currentMultiCityRoute = null; // Stores the multi-city data for the details panel
 
 // ===== FADE OUT ANIMATION UTILITY =====
 function fadeOutAndRemove(layer) {
@@ -144,13 +145,17 @@ function hideError() {
 window.switchPanel = function (panelId) {
     let currentStart = "", currentEnd = "";
 
-    if (activePanel === 'optimal') {
+    // FIX: If we are on the Details panel, pretend we are already on the target panel 
+    // so we grab the existing text instead of grabbing empty strings!
+    let sourcePanel = activePanel === 'details' ? panelId : activePanel;
+
+    if (sourcePanel === 'optimal') {
         currentStart = document.getElementById('startAirport').value;
         currentEnd = document.getElementById('endAirport').value;
-    } else if (activePanel === 'alternatives') {
+    } else if (sourcePanel === 'alternatives') {
         currentStart = document.getElementById('altStart').value;
         currentEnd = document.getElementById('altEnd').value;
-    } else if (activePanel === 'reachability') {
+    } else if (sourcePanel === 'reachability') {
         currentStart = document.getElementById('bfsStart').value;
         currentEnd = document.getElementById('endAirport').value || document.getElementById('altEnd').value;
     }
@@ -908,6 +913,14 @@ function selectAltRoute(index) {
     renderMap(mapData);
 }
 
+window.goBackFromDetails = function () {
+    // Your code stores the origin as "panel-optimal", "panel-multicity", etc.
+    // The switchPanel function just wants the word "optimal" or "multicity".
+    // So, we quickly chop off the "panel-" part and switch to it!
+    const targetPanel = originalPanelForDetails.replace('panel-', '');
+    switchPanel(targetPanel);
+};
+
 window.showRouteDetails = function (routeData, originPanelId) {
     if (typeof switchPanel !== 'function') { console.error('switchPanel not defined'); return; }
 
@@ -940,14 +953,29 @@ window.showRouteDetails = function (routeData, originPanelId) {
         const name = (pathNames[i] || (airport ? airport.text : airportCode));
         const cityStr = (airport && airport.city && airport.city !== 'Unknown') ? `${airport.city}${airport.country ? ', ' + airport.country : ''}` : '';
 
+        const isFirst = (i === 0);
         const isLast = (i === nodes.length - 1);
-        const itemClass = i === 0 ? 'origin' : (isLast ? 'destination' : 'layover');
+
+        // Check if this specific airport was one of the user's requested multi-city stops
+        const isRequestedStop = routeData.requested_stops && routeData.requested_stops.includes(airportCode);
+
+        // Make requested stops use the 'destination' class so they look like main hubs, not tiny layovers
+        const itemClass = isFirst ? 'origin' : ((isLast || isRequestedStop) ? 'destination' : 'layover');
+
+        // Add a green "STOP X" badge for the requested waypoints to match the map numbers
+        let stopBadge = '';
+        if (isRequestedStop && !isFirst && !isLast) {
+            const stopNumber = routeData.requested_stops.indexOf(airportCode) + 1;
+            stopBadge = `<span style="background: #10B981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 8px; vertical-align: middle;">STOP ${stopNumber}</span>`;
+        }
 
         timelineHtml += `
             <div class="timeline-item ${itemClass}">
                 <div class="timeline-marker"></div>
                 <div class="timeline-content">
-                    <span class="timeline-airport" style="line-height: 1.2; display: block; margin-bottom: 2px;">${name}</span>
+                    <span class="timeline-airport" style="line-height: 1.2; display: block; margin-bottom: 2px;">
+                        ${stopBadge}${name}
+                    </span>
                     ${cityStr ? `<span class="timeline-city">${cityStr}</span>` : ''}
                 </div>
             </div>
@@ -1141,6 +1169,18 @@ window.showRouteDetails = function (routeData, originPanelId) {
                         }
                     }
                 });
+                // --- NEW ARROW HIDING LOGIC ---
+                // If there is only 1 card (like in Multi-City), hide the navigation arrows
+                const leftArrow = floatPanel.querySelector('.button.left');
+                const rightArrow = floatPanel.querySelector('.button.right');
+
+                if (sideCards.length <= 1) {
+                    if (leftArrow) leftArrow.style.display = 'none';
+                    if (rightArrow) rightArrow.style.display = 'none';
+                } else {
+                    if (leftArrow) leftArrow.style.display = ''; // Reverts to CSS default
+                    if (rightArrow) rightArrow.style.display = '';
+                }
             }
         }
 
@@ -1458,10 +1498,8 @@ async function queryMultiCity() {
 
         hideLoading('multicity');
 
-        if (data.code === 0) {
-            showMultiCityError(data.msg);
-            return;
-        }
+        // 1. SAVE the route data globally so our button can use it!
+        currentMultiCityRoute = data.route;
 
         renderMap(data.route);
 
@@ -1504,8 +1542,12 @@ async function queryMultiCity() {
                 pathHtml = `<div style="margin-bottom: 8px; font-size: 14px; text-align: left;">${path.join(' &rarr; ')}</div>`;
             }
 
+            // 2. Wrap it in a .result-card .selected so your floating panels recognize it!
             area.innerHTML = `
-                <div class="summary" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+                <div class="result-card selected" style="background: linear-gradient(135deg, #ffffff, #f0f7ff); border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; margin: 0;">
+                    
+                    <div class="first" style="display:none;"><div class="title">Multi-City Planner</div></div>
+                    
                     <div style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
                     
                     ${pathHtml}
@@ -1520,6 +1562,13 @@ async function queryMultiCity() {
                             <div style="color: #059669; font-weight: 900; font-size: 20px;">$${total_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
+                    
+                    <div class="action-buttons" style="margin-top: 15px; display: block;">
+                        <button class="search-btn showDetails" onclick="showRouteDetails(currentMultiCityRoute, 'panel-multicity')" style="width: 100%; height: 40px;">
+                            <i class="fa fa-list"></i> View More Details
+                        </button>
+                    </div>
+
                 </div>
             `;
             area.style.display = 'block';
@@ -1573,9 +1622,6 @@ window.collapsePanel = function (element) {
                     .findIndex(div => div.classList.contains('selected'));
                 if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
             }
-        } else if (panelID == "panel-multicity") {
-            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
-            document.querySelector('div[value="' + panelID + '"].floating .box').innerHTML = panel.querySelector("#multiCityResultArea").innerHTML;
         }
     }
     else {
