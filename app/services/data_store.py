@@ -105,5 +105,7 @@ def load_flight_data():
         flight_graph.clear()
         flight_graph.update(adjacency_list)
         print(f"Loaded {len(flight_graph)} airports with cleaned formatting.")
+    except FileNotFoundError as e:
+        print(f"File not found: {str(e)}")
     except Exception as e:
         print(f"Load JSON failed: {str(e)}")
