@@ -1,8 +1,63 @@
 import time
 from app.services.data_store import flight_graph
 
-# Your existing MinHeap and _reconstruct_path stay exactly the same!
-# (MinHeap code omitted for brevity, but assume it is here)
+class MinHeap:
+    """A minimal binary heap implementation for priority queue operations."""
+
+    def __init__(self):
+        self.heap = []
+
+    def push(self, element):
+        """Add an element to the heap while maintaining the heap property."""
+        self.heap.append(element)
+        self._bubble_up(len(self.heap) - 1)
+
+    def pop(self):
+        """Remove and return the smallest element from the heap."""
+        if not self.heap:
+            raise IndexError("pop from an empty heap")
+        if len(self.heap) == 1:
+            return self.heap.pop()
+        
+        root = self.heap[0]
+        self.heap[0] = self.heap.pop()
+        self._bubble_down(0)
+        return root
+
+    def _bubble_up(self, index):
+        """Move the element at 'index' up to its correct position."""
+        while index > 0:
+            parent = (index - 1) // 2
+            if self.heap[index] < self.heap[parent]:
+                self.heap[index], self.heap[parent] = self.heap[parent], self.heap[index]
+                index = parent
+            else:
+                break
+
+    def _bubble_down(self, index):
+        """Move the element at 'index' down to its correct position."""
+        while True:
+            left = 2 * index + 1
+            right = 2 * index + 2
+            smallest = index
+
+            if left < len(self.heap) and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < len(self.heap) and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest != index:
+                self.heap[index], self.heap[smallest] = self.heap[smallest], self.heap[index]
+                index = smallest
+            else:
+                break
+
+    def __len__(self):
+        return len(self.heap)
+
+    def __bool__(self):
+        return len(self.heap) > 0
+
 
 def _reconstruct_path(predecessors, end):
     """Backtracks from end node to start node using the predecessors dictionary."""

@@ -6,6 +6,7 @@ let tempEndMarker = null;
 let bfsMarkers = [];  // For BFS reachability feature
 let bfsCircles = []; // For BFS radius circles
 let activePanel = 'optimal'; // Tracks the currently active tab
+let originalPanelForDetails = 'optimal'; // Tracks where we came from
 
 // ===== FADE OUT ANIMATION UTILITY =====
 function fadeOutAndRemove(layer) {
@@ -732,7 +733,7 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
     });
 
     showDetailsBtn.addEventListener('click', () => {
-        showRouteDetails(routeData);
+        showRouteDetails(routeData, 'panel-optimal');
     });
 }
 
@@ -874,7 +875,7 @@ function renderAltRoutesList() {
             <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
             <div class="action-buttons">
                 <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
-                <div class="showDetails" onclick="showRouteDetails(altRoutesData[${idx}])">More Details</div>
+                <div class="showDetails" onclick="showRouteDetails(altRoutesData[${idx}], 'panel-alternatives')">More Details</div>
             </div>
         `;
 
@@ -907,8 +908,12 @@ function selectAltRoute(index) {
     renderMap(mapData);
 }
 
-window.showRouteDetails = function (routeData) {
+window.showRouteDetails = function (routeData, originPanelId) {
     if (typeof switchPanel !== 'function') { console.error('switchPanel not defined'); return; }
+
+    // Store origin panel if provided (from button click)
+    if (originPanelId) originalPanelForDetails = originPanelId;
+
     switchPanel('details');
     const area = document.getElementById('detailsArea');
     if (!area) return;
@@ -930,14 +935,14 @@ window.showRouteDetails = function (routeData) {
     for (let i = 0; i < nodes.length; i++) {
         const airportCode = nodes[i];
         const airport = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${airportCode})`)) : null;
-        
+
         // Fallback to path_names if airportData is missing
         const name = (pathNames[i] || (airport ? airport.text : airportCode));
         const cityStr = (airport && airport.city && airport.city !== 'Unknown') ? `${airport.city}${airport.country ? ', ' + airport.country : ''}` : '';
 
         const isLast = (i === nodes.length - 1);
         const itemClass = i === 0 ? 'origin' : (isLast ? 'destination' : 'layover');
-        
+
         timelineHtml += `
             <div class="timeline-item ${itemClass}">
                 <div class="timeline-marker"></div>
@@ -955,17 +960,17 @@ window.showRouteDetails = function (routeData) {
             } else {
                 // Try to find lat/lng for calculation
                 const ap1 = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${nodes[i]})`)) : null;
-                const ap2 = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${nodes[i+1]})`)) : null;
-                
+                const ap2 = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${nodes[i + 1]})`)) : null;
+
                 if (ap1 && ap2 && ap1.lat && ap1.lng && ap2.lat && ap2.lng) {
                     distVal = getDistanceFromLatLonInKm(ap1.lat, ap1.lng, ap2.lat, ap2.lng).toFixed(2);
-                } else if (routeData.coords && routeData.coords[nodes[i]] && routeData.coords[nodes[i+1]]) {
+                } else if (routeData.coords && routeData.coords[nodes[i]] && routeData.coords[nodes[i + 1]]) {
                     const c1 = routeData.coords[nodes[i]];
-                    const c2 = routeData.coords[nodes[i+1]];
+                    const c2 = routeData.coords[nodes[i + 1]];
                     distVal = getDistanceFromLatLonInKm(c1[0], c1[1], c2[0], c2[1]).toFixed(2);
                 }
             }
-            
+
             timelineHtml += `
                 <div class="timeline-leg-info">
                     <span><i class="fa fa-plane"></i> Leg ${i + 1}</span>
@@ -976,20 +981,43 @@ window.showRouteDetails = function (routeData) {
     }
     timelineHtml += '</div>';
 
+    // First, calculate the layovers
+    const layoverCount = nodes.length - 2;
+    const layoverText = layoverCount <= 0 ? 'Direct Flight' : `${layoverCount} Stop${layoverCount > 1 ? 's' : ''}`;
+
     area.innerHTML = `
-        <div class="details-summary">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 700; font-size: 18px;">
-                <span><i class="fa fa-plane-departure" style="color: #1B67F6;"></i> ${nodes[0]} → ${nodes[nodes.length - 1]}</span>
-                <span style="color: #10B981;">$${price.toFixed(2)}</span>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa fa-route" style="color: #64748b;"></i>
-                    <span>${distTotal.toFixed(2)} km</span>
+        <div class="details-summary" style="padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 12px;">
+                <div>
+                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Flight Path</span>
+                    <span style="font-weight: 800; font-size: 18px;"><i class="fa fa-plane-departure" style="color: #1B67F6; margin-right: 6px;"></i> ${nodes[0]} → ${nodes[nodes.length - 1]}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa fa-clock" style="color: #64748b;"></i>
-                    <span>${formatTime(timeTotal)}</span>
+                <div style="text-align: right;">
+                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Total Price</span>
+                    <span style="color: #10B981; font-weight: 800; font-size: 18px;">$${price.toFixed(2)}</span>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 14px;">
+                <div>
+                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Distance</span>
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        <i class="fa fa-route" style="color: #1B67F6;"></i>
+                        <span>${distTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Time</span>
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        <i class="fa fa-clock-o" style="color: #1B67F6;"></i>
+                        <span>${formatTime(timeTotal)}</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Layovers</span>
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        <i class="fa fa-exchange" style="color: #1B67F6;"></i>
+                        <span>${layoverText}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1002,33 +1030,120 @@ window.showRouteDetails = function (routeData) {
 
     const floatPanel = document.querySelector('div[value="panel-details"].floating');
     if (floatPanel) {
-        floatPanel.querySelector('.box').innerHTML = `
-            <div class="result-card active selected" style="margin: 0; width: 100%; box-shadow: none;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <span style="font-weight: 800; font-size: 1.4rem;">Detail Route</span>
-                    <div style="display: flex; gap: 6px;">
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">Active</span>
+        // Try to FIND the original card to copy its header (title and badges)
+        const originPanel = document.getElementById(originalPanelForDetails);
+        let headerHtml = `<span style="font-weight: 800; font-size: 1.4rem;">Detail Route</span>`;
+        if (originPanel) {
+            const selectedCard = originPanel.querySelector('.result-card.selected');
+            if (selectedCard) {
+                const title = selectedCard.querySelector('.title') ? selectedCard.querySelector('.title').innerHTML : 'Detail Route';
+                const type = selectedCard.querySelector('.type') ? selectedCard.querySelector('.type').innerHTML : '';
+                headerHtml = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                        <span style="font-weight: 800; font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${title}</span>
+                        <div class="type">${type}</div>
                     </div>
-                </div>
-                <div style="font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500;">
+                 `;
+            }
+        }
+
+        floatPanel.querySelector('.box').innerHTML = `
+            <div class="result-card active selected" style="margin: 0; width: 100%; box-shadow: none; border: none;">
+                ${headerHtml}
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${nodes.join(' → ')}
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
-                        <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Price</span>
-                        <span style="font-size: 1.3rem; font-weight: 900; color: #1B67F6;">$${price.toFixed(2)}</span>
+                        <span style="font-size: 1.2rem; font-weight: 900; color: #1B67F6;">$${price.toFixed(2)}</span>
                     </div>
                     <div>
-                        <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Distance</span>
                         <span style="font-size: 1.1rem; font-weight: 700;">${distTotal.toFixed(2)} km</span>
                     </div>
                 </div>
-                <button class="search-btn" disabled style="width: 100%; background: #334155; opacity: 0.8; height: 40px; font-size: 14px;">
-                     Showing More Details
+                <button class="search-btn is-details-indicator" disabled style="width: 100%; height: 36px; font-size: 13px; border-radius: 10px; background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.3); color: inherit; opacity: 1 !important;">
+                     Viewing More Details
                 </button>
             </div>
         `;
-        
+
+        // Sync the arrow cards too!
+        // Sync the arrow cards too!
+        const boxContainer = floatPanel.querySelector('.box');
+        const originFloatPanel = document.querySelector(`div[value="${originalPanelForDetails}"].floating`);
+        const originMainPanel = document.getElementById(originalPanelForDetails);
+
+        if (originMainPanel) {
+            const sideCards = originMainPanel.querySelectorAll('.result-card');
+            if (sideCards.length > 0) {
+                boxContainer.innerHTML = '';
+                sideCards.forEach((c) => {
+                    const clone = c.cloneNode(true);
+                    // Ensure clone respects dark mode background (remove ad-hoc background style)
+                    clone.style.background = '';
+                    boxContainer.appendChild(clone);
+                });
+
+                const cards = boxContainer.querySelectorAll('.result-card');
+                // Find which one is selected
+                const selectedIndex = Array.from(sideCards).findIndex(c => c.classList.contains('selected'));
+
+                cards.forEach((c, idx) => {
+                    // Grab the buttons directly instead of changing their base classes
+                    const detailsBtn = c.querySelector('.showDetails');
+                    const mapBtn = c.querySelector('.showRoute');
+
+                    if (idx === selectedIndex || (selectedIndex === -1 && idx === 0)) {
+                        c.classList.add('active', 'selected');
+
+                        if (detailsBtn) {
+                            detailsBtn.innerText = "Viewing More Details";
+                            // Make it look like a seamless disabled button
+                            detailsBtn.style.background = "rgba(148, 163, 184, 0.2)";
+                            detailsBtn.style.color = "#94a3b8";
+                            detailsBtn.style.border = "1px solid rgba(148, 163, 184, 0.1)";
+                            detailsBtn.style.cursor = "default";
+                            detailsBtn.style.pointerEvents = "none";
+                            detailsBtn.style.width = "100%";
+                            detailsBtn.style.justifyContent = "center";
+                        }
+                        if (mapBtn) {
+                            // Hide the map button on the active card so 'Viewing More Details' gets the full width
+                            mapBtn.style.display = "none";
+                        }
+                    } else {
+                        c.classList.remove('active', 'selected');
+
+                        // FIX: Re-attach the click events to the cloned buttons!
+                        if (detailsBtn) {
+                            detailsBtn.style.cursor = "pointer";
+                            detailsBtn.onclick = function () {
+                                if (originMainPanel) {
+                                    const realCards = originMainPanel.querySelectorAll('.result-card');
+                                    if (realCards[idx]) {
+                                        const realBtn = realCards[idx].querySelector('.showDetails');
+                                        if (realBtn) realBtn.click(); // Triggers your original showRouteDetails logic perfectly
+                                    }
+                                }
+                            };
+                        }
+                        if (mapBtn) {
+                            mapBtn.style.cursor = "pointer";
+                            mapBtn.onclick = function () {
+                                if (originMainPanel) {
+                                    const realCards = originMainPanel.querySelectorAll('.result-card');
+                                    if (realCards[idx]) {
+                                        const realBtn = realCards[idx].querySelector('.showRoute');
+                                        if (realBtn) realBtn.click(); // Triggers your original map rendering
+                                    }
+                                }
+                            };
+                        }
+                    }
+                });
+            }
+        }
+
         // Activate floating if panel is currently hidden
         const btn = document.querySelector('div[value="panel-details"].collapseBtn');
         if (btn && btn.classList.contains('expand')) {
@@ -1436,11 +1551,17 @@ window.collapsePanel = function (element) {
             document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
 
             document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
-            // For detalles, showRouteDetails already set its floatBox,
-            // but for safety during initial collapse:
+
             if (panelID == "panel-details") {
-                // If floatBox is empty, we force a refresh from current details if it's there
-                // However, showRouteDetails is usually called right before or switchPanel is used.
+                // FIX: Find the selected card in the floating box and make it visible again
+                const floatCards = document.querySelectorAll('div[value="' + panelID + '"].floating .result-card');
+                const selectedIndex = Array.from(floatCards).findIndex(div => div.classList.contains('selected'));
+
+                if (selectedIndex !== -1) {
+                    floatCards[selectedIndex].classList.add("active");
+                } else if (floatCards.length > 0) {
+                    floatCards[0].classList.add("active"); // Fallback to the first card
+                }
             }
             else if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
                 const index = Array.from(panel.querySelectorAll(".result-card"))
@@ -1479,8 +1600,12 @@ window.collapsePanel = function (element) {
 }
 
 window.floatCardControl = function (element, direction) {
-    const cards = Array.from(element.parentElement.querySelectorAll(".result-card"));
-    const activeIndex = cards.findIndex(c => c.classList.contains('active'));;
+    const box = element.parentElement.querySelector(".box");
+    const cards = Array.from(box.querySelectorAll(".result-card"));
+    if (cards.length === 0) return;
+
+    const activeIndex = cards.findIndex(c => c.classList.contains('active'));
+    if (activeIndex === -1) return;
 
     let newIndex = activeIndex + direction;
     if (newIndex >= cards.length) newIndex = 0;
@@ -1489,8 +1614,38 @@ window.floatCardControl = function (element, direction) {
     cards[activeIndex].classList.remove('active');
     cards[newIndex].classList.add('active');
 
-    const showRoute = cards[newIndex].querySelector(".showRoute");
-    if (showRoute) showRoute.click();
+    const panelID = element.parentElement.getAttribute("value");
+
+    // Original switching logic
+    if (panelID === "panel-details") {
+        // Find the index in the ORIGINAL panel floating cards
+        const originFloat = document.querySelector(`div[value="${originalPanelForDetails}"].floating`);
+        if (originFloat) {
+            floatCardControl(originFloat.querySelector('.button.right'), direction);
+        }
+    } else {
+        const showRoute = cards[newIndex].querySelector(".showRoute") || cards[newIndex].querySelector(".showDetails");
+        if (showRoute) {
+            // Try to trigger the click on the panel side version for consistency
+            const realPanel = document.getElementById(panelID);
+            if (realPanel) {
+                const realCards = realPanel.querySelectorAll('.result-card');
+                if (realCards[newIndex]) {
+                    const btn = realCards[newIndex].querySelector('.showRoute') || realCards[newIndex].querySelector('.showDetails');
+                    if (btn) {
+                        btn.click();
+                        // If we are in details mode, RE-TRIGGER showRouteDetails to update the timeline!
+                        if (activePanel === 'details') {
+                            const routeData = panelID === 'panel-optimal' ? currentRoutesData[newIndex === 0 ? 'time' : (newIndex === 1 ? 'distance' : 'price')] : altRoutesData[newIndex];
+                            if (routeData) showRouteDetails(routeData);
+                        }
+                    }
+                }
+            } else {
+                showRoute.click();
+            }
+        }
+    }
 }
 
 /**

@@ -331,6 +331,27 @@
 
     </div>
 
+    <!-- Fifth Panel: Route Details -->
+    <div class="panel" id="panel-details" style="display: none;">
+        <div class="title">
+            <p><i class="fa fa-info-circle"></i>Route Details</p>
+            <p>Comprehensive breakdown of your itinerary</p>
+        </div>
+
+        <div id="detailsArea" style="margin-top: 20px;">
+            <!-- Dynamically populated -->
+        </div>
+
+        <div class="action-row" style="margin-top: 25px;">
+            <button class="search-btn print-btn" onclick="window.print()" style="flex: 1; background: #0A66C2; color: white;">
+                <i class="fa fa-print"></i>Print Itinerary
+            </button>
+            <button class="clear-btn" onclick="switchPanel('optimal')">
+                <i class="fa fa-arrow-left"></i> Back
+            </button>
+        </div>
+    </div>
+
     <!-- Collapse button -->
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-optimal"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
@@ -339,6 +360,8 @@
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-reachability" style="display: none;"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
     <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-multicity" style="display: none;"><i
+            class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
+    <div class="collapseBtn collapse" onclick="collapsePanel(this)" value="panel-details" style="display: none;"><i
             class="fa fa-arrow-right"></i><span class="tooltip">Collapse</span></div>
 
     <!-- Floating first panel -->
@@ -362,9 +385,11 @@
         <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
     </div>
 
-    <!-- Floating fourth panel -->
-    <div class="floating" value="panel-multicity">
+    <!-- Floating Route Details panel -->
+    <div class="floating" value="panel-details">
+        <div class="button left" onclick="floatCardControl(this, -1)"><i class="fa fa-chevron-left"></i></div>
         <div class="box"></div>
+        <div class="button right" onclick="floatCardControl(this, 1)"><i class="fa fa-chevron-right"></i></div>
     </div>
 
     <script src="/static/script.js?v=4"></script>

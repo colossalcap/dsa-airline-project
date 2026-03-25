@@ -129,7 +129,7 @@ input[list]::-webkit-calendar-picker-indicator {
 }
 
 .panel.collapse {
-    transform: translateX(405px);
+    right: -400px;
 }
 
 /* Panel - Title */
@@ -507,24 +507,41 @@ input[list]::-webkit-calendar-picker-indicator {
     padding: 4px 8px;
 }
 
-.result-card .showRoute {
+.result-card .action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.result-card .showRoute,
+.result-card .showDetails {
     height: 36px;
     font-size: 14px;
     font-weight: 500;
     padding: 8px 0;
-    background: rgb(27, 103, 246, 0.1);
-    color: rgb(27, 103, 246);
     border-radius: 8px;
     text-align: center;
-    margin-top: 12px;
     cursor: pointer;
-    display: inline-block;
-    width: 100%;
+    flex: 1;
+}
+
+.result-card .showRoute {
+    background: rgb(27, 103, 246, 0.1);
+    color: rgb(27, 103, 246);
+}
+
+.result-card .showDetails {
+    background: rgb(107, 114, 128, 0.1);
+    color: rgb(75, 85, 99);
 }
 
 .result-card .showRoute:hover,
 .tab-btn.fewest:hover {
     background: rgb(27, 103, 246, 0.2)
+}
+
+.result-card .showDetails:hover {
+    background: rgb(107, 114, 128, 0.2);
 }
 
 /* Result card - Type Cheapest */
@@ -1210,12 +1227,13 @@ path.leaflet-interactive {
     height: 40px;
     width: 40px;
     border-radius: 100%;
-    position: relative;
-    display: inline-block;
-    left: 94.5%;
+    position: absolute;
+    top: 90px;
+    right: 380px;
+    left: auto;
     z-index: 200;
-    margin-top: 2%;
-    transition: transform 0.5s;
+    margin-top: 0;
+    transition: transform 0.5s ease, right 0.5s ease, background-color 0.3s;
 }
 
 .collapseBtn i {
@@ -1242,9 +1260,8 @@ path.leaflet-interactive {
 
 .collapseBtn.expand .tooltip {
     position: absolute;
-    right: -245%;
-    bottom: 10%;
-    rotate: 180deg;
+    right: 120%; /* Show on the LEFT of the button when on the right edge */
+    bottom: 15%;
 }
 
 .collapseBtn .tooltip::after {
@@ -1263,7 +1280,52 @@ path.leaflet-interactive {
 }
 
 .collapseBtn.expand {
+    right: 20px;
+}
+
+.collapseBtn i {
+    transition: transform 0.5s ease;
+}
+
+.collapseBtn.expand i {
     transform: rotate(180deg);
+}
+
+.details-summary {
+    margin-bottom: 20px;
+    border-radius: 18px;
+    padding: 15px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+body.dark-mode .details-summary {
+    background: #1e1e1e !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+@media print {
+    body {
+        background: white;
+    }
+    .header, .map-card, .collapseBtn, .floating, .panel {
+        display: none !important;
+    }
+    #panel-details {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: none !important;
+        box-shadow: none !important;
+        transform: none !important;
+        padding: 0 !important;
+    }
+    #panel-details .clear-btn,
+    #panel-details .print-btn {
+        display: none !important;
+    }
 }
 
 /* Floating Panel */
@@ -1318,9 +1380,12 @@ div.floating[value="panel-reachability"] .result-card .bfs-airport-list {
     max-height: 88px;
 }
 
-/* ===================================================================
-   DARK MODE THEME
-=================================================================== */
+body.dark-mode .is-details-indicator {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
 body.dark-mode {
     background-color: #121212;
     color: #e0e0e0;
@@ -1371,6 +1436,145 @@ body.dark-mode .summary {
 body.dark-mode .tab-btn {
     background: #2d2d2d;
     color: #bbb;
+}
+
+/* Dark mode for details panel */
+body.dark-mode .panel.result,
+body.dark-mode #panel-details,
+body.dark-mode #panel-details .result-area {
+    background: #1e1e1e !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #panel-details .title p {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #panel-details .summary {
+    background: #1e1e1e !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #panel-details .summary > div {
+    color: #e0e0e0 !important;
+    background: transparent !important;
+    border-color: #444 !important;
+}
+
+body.dark-mode #panel-details #detailsArea div[style*="background: #f8fafc"] {
+    background: #262626 !important;
+    border-left-color: #0A66C2 !important;
+}
+
+body.dark-mode #panel-details #detailsArea div[style*="background: white"],
+body.dark-mode #panel-details #detailsArea .summary {
+    background: #1e1e1e !important;
+}
+
+body.dark-mode #panel-details span[style*="color: #1e293b"],
+body.dark-mode #panel-details div[style*="color: #1e293b"],
+body.dark-mode #panel-details span[style*="color: #64748b"],
+body.dark-mode #panel-details div[style*="color: #64748b"] {
+    color: #b0b0b0 !important;
+}
+
+body.dark-mode #panel-details div[style*="border-top: 2px solid #f1f5f9"],
+body.dark-mode #panel-details div[style*="border-bottom: 1px solid #f1f5f9"],
+body.dark-mode #panel-details div[style*="border-top: 1px solid #f1f5f9"] {
+    border-color: #444 !important;
+}
+
+/* ===================================================================
+   TIMELINE STYLES (COMPACT DETAILS)
+=================================================================== */
+.timeline {
+    position: relative;
+    padding: 10px 0 20px 20px;
+    margin-left: 10px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+body.dark-mode .timeline::before {
+    background: #334155;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+    padding-left: 20px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -20px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #1B67F6;
+    z-index: 1;
+}
+
+.timeline-item.origin .timeline-marker {
+    background: #1B67F6;
+}
+
+.timeline-item.destination .timeline-marker {
+    background: #10B981;
+    border-color: #10B981;
+}
+
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-airport {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.timeline-city {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.timeline-leg-info {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #475569;
+    border-left: 3px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.dark-mode .timeline-airport { color: #f1f5f9; }
+body.dark-mode .timeline-city { color: #94a3b8; }
+body.dark-mode .timeline-leg-info {
+    background: #1e293b;
+    color: #cbd5e1;
+    border-left-color: #475569;
 }
 
 /* SMART MAP INVERSION TRICK FOR DARK MODE */

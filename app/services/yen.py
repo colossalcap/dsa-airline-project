@@ -1,7 +1,6 @@
 import time
 from app.services.data_store import flight_graph
-from app.services.dijkstra import dijkstra_for_yens
-# Note: Ensure your MinHeap class is imported here as well!
+from app.services.dijkstra import dijkstra_for_yens, MinHeap
 
 def find_alternative_routes_yens(start, end, max_connections=3, K=10):
     """Yen's Algorithm (K-Shortest Paths)."""
