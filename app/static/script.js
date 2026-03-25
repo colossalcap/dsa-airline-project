@@ -154,7 +154,7 @@ window.switchPanel = function (panelId) {
         currentEnd = document.getElementById('endAirport').value || document.getElementById('altEnd').value;
     }
 
-    if (panelId !== 'multicity') {
+    if (panelId !== 'multicity' && panelId !== 'details') {
         document.getElementById('startAirport').value = currentStart;
         document.getElementById('altStart').value = currentStart;
         document.getElementById('bfsStart').value = currentStart;
@@ -706,7 +706,10 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
                 <div class="distance">${routeData.total_distance.toLocaleString()} km</div>
             </div>
             
-            <div class="showRoute">Show on Map</div>
+            <div class="action-buttons">
+                <div class="showRoute">Show on Map</div>
+                <div class="showDetails">More Details</div>
+            </div>
         </div>
     `;
 
@@ -714,6 +717,7 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
 
     const cardElement = container.lastElementChild;
     const showMapBtn = cardElement.querySelector('.showRoute');
+    const showDetailsBtn = cardElement.querySelector('.showDetails');
 
     showMapBtn.addEventListener('click', () => {
         if (routeLine) fadeOutAndRemove(routeLine);
@@ -725,6 +729,10 @@ function createRouteCard(pathData, cardTitle, container, criteriaNames) {
             card.classList.remove('selected');
         });
         cardElement.classList.add('selected');
+    });
+
+    showDetailsBtn.addEventListener('click', () => {
+        showRouteDetails(routeData);
     });
 }
 
@@ -864,7 +872,10 @@ function renderAltRoutesList() {
             <div class="second"><div class="path">${route.path.join(' → ')}</div><div class="stops">${flights <= 0 ? 'Direct' : `${flights} stop${flights > 1 ? 's' : ''}`}</div><div class="time">${hours}h ${mins}m</div></div>
             <div class="third"><div class="price">$${route.total_price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             <div class="distance">${route.total_distance.toLocaleString()} km</div></div>
-            <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
+            <div class="action-buttons">
+                <div class="showRoute" onclick="selectAltRoute(${idx})">Show on Map</div>
+                <div class="showDetails" onclick="showRouteDetails(altRoutesData[${idx}])">More Details</div>
+            </div>
         `;
 
         container.appendChild(card);
@@ -894,6 +905,136 @@ function selectAltRoute(index) {
     };
 
     renderMap(mapData);
+}
+
+window.showRouteDetails = function (routeData) {
+    if (typeof switchPanel !== 'function') { console.error('switchPanel not defined'); return; }
+    switchPanel('details');
+    const area = document.getElementById('detailsArea');
+    if (!area) return;
+
+    // The data might have different keys depending on where it came from
+    const nodes = routeData.path || routeData.path_nodes || [];
+    const price = routeData.total_price || routeData.price || 0;
+    const distTotal = routeData.total_distance || 0;
+    const timeTotal = routeData.total_time || 0;
+    const distances = routeData.distances || [];
+    const pathNames = routeData.path_names || [];
+
+    if (nodes.length === 0) {
+        area.innerHTML = '<p style="padding: 20px; text-align: center;">No route data available.</p>';
+        return;
+    }
+
+    let timelineHtml = '<div class="timeline">';
+    for (let i = 0; i < nodes.length; i++) {
+        const airportCode = nodes[i];
+        const airport = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${airportCode})`)) : null;
+        
+        // Fallback to path_names if airportData is missing
+        const name = (pathNames[i] || (airport ? airport.text : airportCode));
+        const cityStr = (airport && airport.city && airport.city !== 'Unknown') ? `${airport.city}${airport.country ? ', ' + airport.country : ''}` : '';
+
+        const isLast = (i === nodes.length - 1);
+        const itemClass = i === 0 ? 'origin' : (isLast ? 'destination' : 'layover');
+        
+        timelineHtml += `
+            <div class="timeline-item ${itemClass}">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <span class="timeline-airport" style="line-height: 1.2; display: block; margin-bottom: 2px;">${name}</span>
+                    ${cityStr ? `<span class="timeline-city">${cityStr}</span>` : ''}
+                </div>
+            </div>
+        `;
+
+        if (!isLast) {
+            let distVal = 'N/A';
+            if (distances[i]) {
+                distVal = distances[i].toFixed(2);
+            } else {
+                // Try to find lat/lng for calculation
+                const ap1 = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${nodes[i]})`)) : null;
+                const ap2 = (typeof globalAirports !== 'undefined') ? globalAirports.find(ap => ap.text && ap.text.includes(`(${nodes[i+1]})`)) : null;
+                
+                if (ap1 && ap2 && ap1.lat && ap1.lng && ap2.lat && ap2.lng) {
+                    distVal = getDistanceFromLatLonInKm(ap1.lat, ap1.lng, ap2.lat, ap2.lng).toFixed(2);
+                } else if (routeData.coords && routeData.coords[nodes[i]] && routeData.coords[nodes[i+1]]) {
+                    const c1 = routeData.coords[nodes[i]];
+                    const c2 = routeData.coords[nodes[i+1]];
+                    distVal = getDistanceFromLatLonInKm(c1[0], c1[1], c2[0], c2[1]).toFixed(2);
+                }
+            }
+            
+            timelineHtml += `
+                <div class="timeline-leg-info">
+                    <span><i class="fa fa-plane"></i> Leg ${i + 1}</span>
+                    <span><strong>${distVal} km</strong></span>
+                </div>
+            `;
+        }
+    }
+    timelineHtml += '</div>';
+
+    area.innerHTML = `
+        <div class="details-summary">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 700; font-size: 18px;">
+                <span><i class="fa fa-plane-departure" style="color: #1B67F6;"></i> ${nodes[0]} → ${nodes[nodes.length - 1]}</span>
+                <span style="color: #10B981;">$${price.toFixed(2)}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-route" style="color: #64748b;"></i>
+                    <span>${distTotal.toFixed(2)} km</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-clock" style="color: #64748b;"></i>
+                    <span>${formatTime(timeTotal)}</span>
+                </div>
+            </div>
+        </div>
+        ${timelineHtml}
+    `;
+
+    if (typeof renderMap === 'function') {
+        renderMap(routeData);
+    }
+
+    const floatPanel = document.querySelector('div[value="panel-details"].floating');
+    if (floatPanel) {
+        floatPanel.querySelector('.box').innerHTML = `
+            <div class="result-card active selected" style="margin: 0; width: 100%; box-shadow: none;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <span style="font-weight: 800; font-size: 1.4rem;">Detail Route</span>
+                    <div style="display: flex; gap: 6px;">
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">Active</span>
+                    </div>
+                </div>
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500;">
+                    ${nodes.join(' → ')}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Price</span>
+                        <span style="font-size: 1.3rem; font-weight: 900; color: #1B67F6;">$${price.toFixed(2)}</span>
+                    </div>
+                    <div>
+                        <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Distance</span>
+                        <span style="font-size: 1.1rem; font-weight: 700;">${distTotal.toFixed(2)} km</span>
+                    </div>
+                </div>
+                <button class="search-btn" disabled style="width: 100%; background: #334155; opacity: 0.8; height: 40px; font-size: 14px;">
+                     Showing More Details
+                </button>
+            </div>
+        `;
+        
+        // Activate floating if panel is currently hidden
+        const btn = document.querySelector('div[value="panel-details"].collapseBtn');
+        if (btn && btn.classList.contains('expand')) {
+            floatPanel.classList.add('active');
+        }
+    }
 }
 
 window.queryAlternativeRoutes = queryAlternativeRoutes;
@@ -1295,12 +1436,18 @@ window.collapsePanel = function (element) {
             document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
 
             document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
-            const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .result-card'))
-                .findIndex(div => div.classList.contains('selected'));
-
-            if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
+            // For detalles, showRouteDetails already set its floatBox,
+            // but for safety during initial collapse:
+            if (panelID == "panel-details") {
+                // If floatBox is empty, we force a refresh from current details if it's there
+                // However, showRouteDetails is usually called right before or switchPanel is used.
+            }
+            else if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
+                const index = Array.from(panel.querySelectorAll(".result-card"))
+                    .findIndex(div => div.classList.contains('selected'));
                 if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
-            } else if (panelID == "panel-reachability") {
+            }
+            else if (panelID == "panel-reachability") {
                 const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div'))
                     .findIndex(div => div.classList.contains('selected'));
                 if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
@@ -1344,4 +1491,14 @@ window.floatCardControl = function (element, direction) {
 
     const showRoute = cards[newIndex].querySelector(".showRoute");
     if (showRoute) showRoute.click();
+}
+
+/**
+ * Format minutes into "Xh Ym"
+ */
+function formatTime(totalMinutes) {
+    if (!totalMinutes) return '0h 0m';
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
 }
