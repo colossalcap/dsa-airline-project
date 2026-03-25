@@ -75,50 +75,65 @@ class MinHeap:
                 break
 
 
+def _reconstruct_path(predecessors, end):
+    """Backtracks from end node to start node using the predecessors dictionary."""
+    path = []
+    curr = end
+    while curr is not None:
+        path.append(curr)
+        curr = predecessors.get(curr)
+    return path[::-1]
+
+
 def find_optimal_route(start_iata, end_iata, criteria='time'):
     """Dijkstra's algorithm to find the optimal route between two airports."""
     print(f"  [DIJKSTRA] Running Dijkstra's algorithm: {start_iata} -> {end_iata} (criteria: {criteria})")
     t_start = time.time()
     heap = MinHeap()
-    heap.push((0, start_iata, [start_iata], 0, 0, 0))
-    visited = set()
+    # (cost, current, tot_time, tot_dist, tot_price)
+    heap.push((0, start_iata, 0, 0, 0))
+    best_costs = {start_iata: 0}
+    predecessors = {start_iata: None}
     nodes_explored = 0
 
     while heap:
-        cost, current, path, tot_time, tot_dist, tot_price = heap.pop()
+        cost, current, tot_time, tot_dist, tot_price = heap.pop()
 
-        if current in visited:
+        if cost > best_costs.get(current, float('inf')):
             continue
-        visited.add(current)
         nodes_explored += 1
 
         if current == end_iata:
             elapsed = (time.time() - t_start) * 1000
             print(f"  [DIJKSTRA] Route FOUND! Explored {nodes_explored} nodes in {elapsed:.2f}ms")
+            path = _reconstruct_path(predecessors, end_iata)
             return path, tot_time, tot_dist, tot_price
 
         if current in flight_graph:
             for neighbor, dur, dist, price in flight_graph[current]:
-                if neighbor not in visited:
-                    if criteria == 'time':
-                        weight = dur
-                    elif criteria == 'distance':
-                        weight = dist
-                    elif criteria == 'price':
-                        weight = price
-                    elif criteria == 'connections':
-                        weight = 1
-                    else:
-                        weight = dur
+                if criteria == 'time':
+                    weight = dur
+                elif criteria == 'distance':
+                    weight = dist
+                elif criteria == 'price':
+                    weight = price
+                elif criteria == 'connections':
+                    weight = 1
+                else:
+                    weight = dur
 
+                new_cost = cost + weight
+                if new_cost < best_costs.get(neighbor, float('inf')):
+                    best_costs[neighbor] = new_cost
+                    predecessors[neighbor] = current
                     heap.push((
-                        cost + weight,
+                        new_cost,
                         neighbor,
-                        path + [neighbor],
                         tot_time + dur,
                         round(tot_dist + dist, 2),
                         round(tot_price + price, 2)
                     ))
+
     elapsed = (time.time() - t_start) * 1000
     print(f"  [DIJKSTRA] No route found after exploring {nodes_explored} nodes in {elapsed:.2f}ms")
     return None, 0, 0, 0
@@ -127,26 +142,25 @@ def find_optimal_route(start_iata, end_iata, criteria='time'):
 def dijkstra_for_yens(start_iata, end_iata, ignored_nodes, ignored_edges, criteria='price'):
     """Modified Dijkstra for Yen's Algorithm that ignores specific nodes and edges."""
     heap = MinHeap()
-    heap.push((0, start_iata, [start_iata], 0, 0, 0))
-    visited = set()
+    heap.push((0, start_iata, 0, 0, 0))
+    best_costs = {start_iata: 0}
+    predecessors = {start_iata: None}
 
     while heap:
-        cost, current, path, tot_time, tot_dist, tot_price = heap.pop()
+        cost, current, tot_time, tot_dist, tot_price = heap.pop()
 
         if current == end_iata:
+            path = _reconstruct_path(predecessors, end_iata)
             return path, tot_time, tot_dist, tot_price
 
-        if current in visited:
+        if cost > best_costs.get(current, float('inf')):
             continue
-        visited.add(current)
 
         if current in flight_graph:
             for neighbor, dur, dist, price in flight_graph[current]:
                 if neighbor in ignored_nodes:
                     continue
                 if (current, neighbor) in ignored_edges:
-                    continue
-                if neighbor in visited:
                     continue
 
                 if criteria == 'time':
@@ -158,9 +172,13 @@ def dijkstra_for_yens(start_iata, end_iata, ignored_nodes, ignored_edges, criter
                 else:
                     weight = price
 
-                heap.push((
-                    cost + weight, neighbor, path + [neighbor],
-                    tot_time + dur, tot_dist + dist, tot_price + price
-                ))
+                new_cost = cost + weight
+                if new_cost < best_costs.get(neighbor, float('inf')):
+                    best_costs[neighbor] = new_cost
+                    predecessors[neighbor] = current
+                    heap.push((
+                        new_cost, neighbor,
+                        tot_time + dur, tot_dist + dist, tot_price + price
+                    ))
     return None, 0, 0, 0
 
