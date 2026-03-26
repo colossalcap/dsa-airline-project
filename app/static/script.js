@@ -8,6 +8,7 @@ let bfsCircles = []; // For BFS radius circles
 let activePanel = 'optimal'; // Tracks the currently active tab
 let originalPanelForDetails = 'optimal'; // Tracks where we came from
 let currentMultiCityRoute = null; // Stores the multi-city data for the details panel
+let multiCityMarkers = []; // For multi-city temporary markers before search
 
 // ===== FADE OUT ANIMATION UTILITY =====
 function fadeOutAndRemove(layer) {
@@ -56,8 +57,55 @@ function hideLoading(panelId) {
 }
 
 window.recenterMap = function () {
-    if (map) {
-        // Flies back to the exact coordinates and zoom level from your initMap function
+    if (!map) return;
+
+    // 1. If we have a computed route being displayed, fit to it
+    if (routeLine && map.hasLayer(routeLine)) {
+        let routeLatLngs = [];
+        
+        // Extract latlngs from all polyline layers in the routeLayer group
+        routeLine.eachLayer(layer => {
+            if (layer.getLatLngs) {
+                const latlngs = layer.getLatLngs();
+                if (Array.isArray(latlngs)) {
+                    // Check if it's a nested array (multi-polyline)
+                    if (Array.isArray(latlngs[0])) {
+                        latlngs.forEach(inner => routeLatLngs = routeLatLngs.concat(inner));
+                    } else {
+                        routeLatLngs = routeLatLngs.concat(latlngs);
+                    }
+                }
+            }
+        });
+
+        if (routeLatLngs.length > 0) {
+            map.fitBounds(routeLatLngs, { padding: [50, 50], duration: 1.5 });
+            return;
+        }
+    }
+
+    // 2. If we have temporary multi-city markers, fit to them
+    if (multiCityMarkers.length > 0) {
+        const mcLatLngs = multiCityMarkers.map(m => m.getLatLng());
+        if (mcLatLngs.length > 1) {
+            map.fitBounds(mcLatLngs, { padding: [60, 60], duration: 1.5 });
+        } else {
+            map.flyTo(mcLatLngs[0], 5, { duration: 1.5 });
+        }
+        return;
+    }
+
+    // 3. Fallback to start/end markers if they exist
+    let targets = [];
+    if (tempStartMarker) targets.push(tempStartMarker.getLatLng());
+    if (tempEndMarker) targets.push(tempEndMarker.getLatLng());
+
+    if (targets.length > 1) {
+        map.fitBounds(targets, { padding: [80, 80], duration: 1.5 });
+    } else if (targets.length === 1) {
+        map.flyTo(targets[0], 5, { duration: 1.5 });
+    } else {
+        // Default View
         map.flyTo([20, 0], 3, { duration: 1.5 });
     }
 };
@@ -135,6 +183,8 @@ function resetRouteDisplay() {
     }
     markers.forEach(fadeOutAndRemove);
     markers = [];
+    multiCityMarkers.forEach(fadeOutAndRemove);
+    multiCityMarkers = [];
 }
 
 function showError(msg) {
@@ -149,7 +199,7 @@ function hideError() {
 }
 
 // ===== PANEL SWITCHING & SYNCING =====
-window.switchPanel = function (panelId) {
+window.switchPanel = function (panelId, skipClear = false) {
     let currentStart = "", currentEnd = "";
 
     // FIX: If we are on the Details panel, pretend we are already on the target panel 
@@ -191,17 +241,23 @@ window.switchPanel = function (panelId) {
 
     const collapseExpanded = document.querySelector('div[value="panel-' + panelId + '"].expand');
     if (collapseExpanded) {
-        // Auto-expand if collapsed when clicking header
-        if (typeof collapsePanel === 'function') {
-            collapsePanel(collapseExpanded);
+        if (!skipClear) {
+            // Auto-expand if collapsed when clicking header
+            if (typeof collapsePanel === 'function') {
+                collapsePanel(collapseExpanded);
+            }
         } else {
-            document.querySelector('div[value="panel-' + panelId + '"].floating').classList.add("active");
+            // Restore floating box if coming back from details
+            const floatPanel = document.querySelector('div[value="panel-' + panelId + '"].floating');
+            if (floatPanel && floatPanel.querySelector('.box div') != null) {
+                floatPanel.classList.add("active");
+            }
         }
     }
 
     activePanel = panelId;
 
-    clearMap();
+    if (!skipClear) clearMap();
     if (panelId !== 'multicity') {
         handleInputChange({ target: { value: currentStart } }, 'startAirport');
         handleInputChange({ target: { value: currentEnd } }, 'endAirport');
@@ -248,6 +304,8 @@ window.clearAllInputs = function () {
 
     clearMap();
     resetRouteDisplay();
+    multiCityMarkers.forEach(fadeOutAndRemove);
+    multiCityMarkers = [];
 };
 
 async function loadAirportOptions() {
@@ -276,6 +334,11 @@ async function loadAirportOptions() {
 function setupInputListeners() {
     document.getElementById('startAirport').addEventListener('input', (e) => handleInputChange(e, 'startAirport'));
     document.getElementById('endAirport').addEventListener('input', (e) => handleInputChange(e, 'endAirport'));
+
+    // Multi-city listeners
+    document.querySelectorAll('.multi-city-input').forEach(input => {
+        input.addEventListener('input', updateMultiCityMarkers);
+    });
 }
 
 function handleInputChange(e, inputId) {
@@ -406,6 +469,7 @@ window.setMapSelection = function (inputId) {
             }
         }
         map.closePopup();
+        updateMultiCityMarkers();
         return;
     }
 
@@ -937,7 +1001,7 @@ window.goBackFromDetails = function () {
     // The switchPanel function just wants the word "optimal" or "multicity".
     // So, we quickly chop off the "panel-" part and switch to it!
     const targetPanel = originalPanelForDetails.replace('panel-', '');
-    switchPanel(targetPanel);
+    switchPanel(targetPanel, true); // skipClear = true
 };
 
 window.showRouteDetails = function (routeData, originPanelId) {
@@ -1463,6 +1527,63 @@ function hideMultiCityError() {
     if (el) el.style.display = 'none';
 }
 
+function updateMultiCityMarkers() {
+    // 1. Clear existing multi-city markers
+    multiCityMarkers.forEach(fadeOutAndRemove);
+    multiCityMarkers = [];
+
+    // Clear old multi-city results since trip plan is now modified
+    const area = document.getElementById('multiCityResultArea');
+    if (area) {
+        area.innerHTML = '';
+        area.style.display = 'none';
+    }
+    const floatContainer = document.querySelector('div[value="panel-multicity"].floating .box');
+    if (floatContainer) floatContainer.innerHTML = '';
+    const floatPanel = document.querySelector('div[value="panel-multicity"].floating');
+    if (floatPanel) floatPanel.classList.remove('active');
+
+    // Also clear existing route line if inputs are being changed
+    if (routeLine) {
+        fadeOutAndRemove(routeLine);
+        routeLine = null;
+    }
+
+    // 2. Loop through all inputs and add markers for valid ones
+    const inputs = document.querySelectorAll('.multi-city-input');
+    let lastValidCoord = null;
+
+    inputs.forEach((input, index) => {
+        const val = input.value.trim();
+        const matched = globalAirports.find(ap => ap.text === val);
+
+        if (matched) {
+            const lat = matched.lat;
+            const lng = matched.lng;
+            lastValidCoord = [lat, lng];
+
+            // Use green for start, red for end, blue for middle
+            let bg = '#3b82f6'; // Blue
+            if (index === 0) bg = '#22c55e'; // Green
+            else if (index === inputs.length - 1 && index > 0) bg = '#ef4444'; // Red
+
+            const marker = L.marker([lat, lng], {
+                icon: L.divIcon({ 
+                    html: `<div class="premium-marker" style="background: ${bg}; color: white; border: 2px solid white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-top: -12px; margin-left: -12px;">${index + 1}</div>`, 
+                    className: '' 
+                })
+            }).addTo(map).bindTooltip(`Stop ${index+1}: ${matched.text.split(') -')[0] + ')'}`, { direction: "top" });
+
+            multiCityMarkers.push(marker);
+        }
+    });
+
+    // 3. Optional: Fly to the last added marker to give feedback
+    if (lastValidCoord) {
+        map.flyTo(lastValidCoord, 4, { duration: 1.2 });
+    }
+}
+
 window.addMultiCityStop = function () {
     const container = document.getElementById('multiCityInputsContainer');
     const stopCount = container.querySelectorAll('.input-item').length + 1;
@@ -1484,6 +1605,12 @@ window.addMultiCityStop = function () {
         </div>
     `;
     container.appendChild(div);
+
+    // Attach listener to the new input
+    const newInput = div.querySelector('input');
+    if (newInput) {
+        newInput.addEventListener('input', updateMultiCityMarkers);
+    }
 };
 
 async function queryMultiCity() {
@@ -1589,6 +1716,23 @@ async function queryMultiCity() {
                 </div>
             `;
             area.style.display = 'block';
+
+            // SYNC with floating box
+            const floatContainer = document.querySelector('div[value="panel-multicity"].floating .box');
+            if (floatContainer) {
+                floatContainer.innerHTML = '';
+                const cardClone = area.querySelector('.result-card').cloneNode(true);
+                // Remove some inline styles for the floating version if needed, or just let it be
+                floatContainer.appendChild(cardClone);
+                
+                // Attach click listener to the details button in the floating version
+                const floatDetailsBtn = cardClone.querySelector('.showDetails');
+                if (floatDetailsBtn) {
+                    floatDetailsBtn.onclick = function() {
+                        showRouteDetails(currentMultiCityRoute, 'panel-multicity');
+                    };
+                }
+            }
         }
 
     } catch (err) {
@@ -1613,26 +1757,41 @@ window.collapsePanel = function (element) {
         element.classList.add("expand");
         element.querySelector("span").textContent = "Expand";
 
-        if (document.querySelector('div[value="' + panelID + '"].floating .box div') != null) {
-            document.querySelector('div[value="' + panelID + '"].floating').classList.add("active");
+        const floatPanel = document.querySelector('div[value="' + panelID + '"].floating');
+        if (floatPanel && floatPanel.querySelector('.box div') != null) {
+            floatPanel.classList.add("active");
+
+            // Hide arrows if only 1 card (or fewer) exists
+            const cards = floatPanel.querySelectorAll('.result-card');
+            const leftBtn = floatPanel.querySelector('.button.left');
+            const rightBtn = floatPanel.querySelector('.button.right');
+
+            if (cards.length <= 1) {
+                if (leftBtn) leftBtn.style.display = 'none';
+                if (rightBtn) rightBtn.style.display = 'none';
+            } else {
+                if (leftBtn) leftBtn.style.display = '';
+                if (rightBtn) rightBtn.style.display = '';
+            }
 
             document.querySelectorAll('div[value="' + panelID + '"].floating .result-card').forEach(div => div.classList.remove('active'));
 
             if (panelID == "panel-details") {
-                // FIX: Find the selected card in the floating box and make it visible again
                 const floatCards = document.querySelectorAll('div[value="' + panelID + '"].floating .result-card');
                 const selectedIndex = Array.from(floatCards).findIndex(div => div.classList.contains('selected'));
-
                 if (selectedIndex !== -1) {
                     floatCards[selectedIndex].classList.add("active");
                 } else if (floatCards.length > 0) {
-                    floatCards[0].classList.add("active"); // Fallback to the first card
+                    floatCards[0].classList.add("active");
                 }
             }
-            else if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
+            else if (panelID == "panel-optimal" || panelID == "panel-alternatives" || panelID == "panel-multicity") {
                 const index = Array.from(panel.querySelectorAll(".result-card"))
                     .findIndex(div => div.classList.contains('selected'));
-                if (index !== -1) document.querySelectorAll('div[value="' + panelID + '"].floating .result-card')[index].classList.add("active");
+                if (index !== -1) {
+                    const floatCards = document.querySelectorAll('div[value="' + panelID + '"].floating .result-card');
+                    if (floatCards[index]) floatCards[index].classList.add("active");
+                }
             }
             else if (panelID == "panel-reachability") {
                 const index = Array.from(document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div'))
@@ -1652,12 +1811,19 @@ window.collapsePanel = function (element) {
         const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
             .findIndex(div => div.classList.contains('active'));
 
-        if (panelID == "panel-optimal" || panelID == "panel-alternatives") {
-            if (index !== -1) document.querySelectorAll('div[id="' + panelID + '"] .result-card')[index].querySelector(".showRoute").click();
+        if (panelID == "panel-optimal" || panelID == "panel-alternatives" || panelID == "panel-multicity") {
+            if (index !== -1) {
+                const realCards = document.querySelectorAll('div[id="' + panelID + '"] .result-card');
+                if (realCards[index]) {
+                    realCards[index].classList.add('selected'); // Ensure selection is maintained
+                    const btn = realCards[index].querySelector(".showRoute");
+                    if (btn) btn.click();
+                }
+            }
         } else if (panelID == "panel-reachability") {
-            const index = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
+            const bfsIndex = Array.from(document.querySelectorAll('div[value="' + panelID + '"].floating .result-card'))
                 .findIndex(div => div.classList.contains('active'));
-            if (index !== -1) document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div')[index].click();
+            if (bfsIndex !== -1) document.querySelectorAll('div[id="' + panelID + '"] .bfsControls div')[bfsIndex].click();
         }
     }
 }
