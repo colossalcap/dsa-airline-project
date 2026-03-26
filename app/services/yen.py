@@ -91,7 +91,7 @@ def find_alternative_routes_yens(start, end, max_connections=3, K=10):
             break
 
         # Extract the absolute best candidate from the heap in O(log N) time
-        best_cost, _, best_new_path = B_heap.pop()
+        _, _, best_new_path = B_heap.pop()
         B_paths.remove(tuple(best_new_path["path"]))
         
         A.append(best_new_path)

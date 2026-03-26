@@ -28,9 +28,19 @@ dsa-airline-project/
 │   ├── templates/
 │   │   └── home.html             # Frontend HTML page
 │   └── static/
-│       ├── script.js             # Frontend JavaScript
 │       ├── style.css             # Frontend styles
-│       └── map/                  # Leaflet map assets
+│       ├── map/                  # Leaflet map assets
+│       └── js/                   # Modular frontend JavaScript (ES modules)
+│           ├── main.js           # Entry point: imports, window bindings, init
+│           ├── state.js          # Centralized shared mutable state
+│           ├── utils.js          # Pure utilities (animation, math, IATA parsing)
+│           ├── map.js            # Leaflet map initialization & rendering
+│           ├── ui.js             # Dark mode, panel switching, collapse/float
+│           ├── optimalRoute.js   # Panel 1: Dijkstra optimal route search
+│           ├── altRoutes.js      # Panel 2: Yen's alternative routes
+│           ├── reachability.js   # Panel 3: BFS reachability map
+│           ├── multiCity.js      # Panel 4: Multi-city route planner
+│           └── routeDetails.js   # Panel 5: Detailed route timeline view
 |
 ├── scripts/
 │   └── setup_run.py              # Dependency checker & launcher

@@ -1186,25 +1186,6 @@ path.leaflet-interactive {
     font-weight: bold;
 }
 
-.marker-bfs-1 {
-    background: rgb(27, 103, 246);
-    color: white;
-}
-
-.marker-bfs-2 {
-    background: rgb(34, 197, 94);
-    color: white;
-}
-
-.marker-bfs-3 {
-    background: rgb(168, 85, 247);
-    color: white;
-}
-
-.marker-bfs-4 {
-    background: rgb(255, 107, 0);
-    color: white;
-}
 
 /* Collapse Button */
 .collapseBtn,

@@ -59,7 +59,7 @@ def get_airport_options():
             })
         quick_sort(options, key_func=lambda x: x["text"])
         return jsonify({"code": 1, "options": options})
-    except Exception as e:
+    except Exception:
         return jsonify({"code": 0, "msg": "Failed to load airports"})
 
 
