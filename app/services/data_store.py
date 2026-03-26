@@ -1,10 +1,16 @@
+"""
+Data Store service.
+Responsible for loading, cleaning, and storing the global flight graph, airport details,
+and coordinate data from the JSON data source.
+"""
 import os
 import json
 import math
 
-flight_graph = {}
-airport_names = {}
-coords_dict = {}
+# Global structures to hold network data in-memory
+flight_graph = {}   # Holds adjacency list: {iata: [(neighbor_iata, duration, distance, price), ...]}
+airport_names = {}  # Holds friendly display names: {iata: "City (IATA) - Airport Name"}
+coords_dict = {}    # Holds spatial coords: {iata: (lat, lon)}
 
 # Common hubs used to normalize airport city names
 hub_patch = {
@@ -18,7 +24,11 @@ hub_patch = {
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6371.0
+    """
+    Calculates the great-circle distance between two points on the Earth's surface
+    specified in decimal degrees using the Haversine formula.
+    """
+    R = 6371.0 # Earth's radius in kilometers
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlon = lon2 - lon1
     dlat = lat2 - lat1
@@ -29,6 +39,11 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 def load_flight_data():
+    """
+    Loads flight and airport data from the local JSON file.
+    It cleans up and normalizes airport names, applies hub city patches,
+    calculates edge weights (distance, price), and populates the global dictionaries.
+    """
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     data_path = os.path.join(base_dir, "data", "airline_routes.json")
     if not os.path.exists(data_path):

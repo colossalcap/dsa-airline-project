@@ -1,3 +1,8 @@
+"""
+Dijkstra's Algorithm service.
+Provides optimal route finding functionality using a custom MinHeap implementation.
+Supports finding paths based on different criteria (time, distance, price).
+"""
 import time
 from app.services.data_store import flight_graph
 
@@ -111,6 +116,8 @@ def find_optimal_route(start_iata, end_iata, criteria='time'):
         if current == end_iata:
             elapsed = (time.time() - t_start) * 1000
             print(f"  [DIJKSTRA] Route FOUND! Explored {nodes_explored} nodes in {elapsed:.2f}ms")
+            
+            # Reconstruct the optimal path by tracking predecessors backwards
             path = _reconstruct_path(predecessors, end_iata)
             
             # OPTIMIZATION 2: Apply float rounding only once at the very end
@@ -122,9 +129,12 @@ def find_optimal_route(start_iata, end_iata, criteria='time'):
                 neighbor, dur, dist, price = edge
                 
                 # Fast inline evaluation instead of a chained if/elif block
+                # Weight becomes 1 if criteria is 'connections', else take the specified edge attribute
                 weight = 1 if weight_idx is None else edge[weight_idx]
 
                 new_cost = cost + weight
+                
+                # If we found a strictly cheaper way to reach the neighbor, update it
                 if new_cost < best_costs.get(neighbor, float('inf')):
                     best_costs[neighbor] = new_cost
                     predecessors[neighbor] = current
@@ -174,6 +184,7 @@ def dijkstra_for_yens(start_iata, end_iata, ignored_nodes, ignored_edges, criter
             continue
 
         if current == end_iata:
+            # Reconstruct the path once the destination is extracted from the heap
             path = _reconstruct_path(predecessors, end_iata)
             # Delayed rounding
             return path, tot_time, round(tot_dist, 2), round(tot_price, 2)
@@ -182,8 +193,11 @@ def dijkstra_for_yens(start_iata, end_iata, ignored_nodes, ignored_edges, criter
             for edge in flight_graph[current]:
                 neighbor, dur, dist, price = edge
                 
+                # Exclude specific nodes that overlap with the root path we are branching from
                 if neighbor in ignored_nodes:
                     continue
+                    
+                # Exclude the specific edge that we are branching from
                 if (current, neighbor) in ignored_edges:
                     continue
 

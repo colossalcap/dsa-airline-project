@@ -1,3 +1,8 @@
+"""
+Yen's Algorithm service (K-Shortest Paths).
+Provides alternative route finding by discovering the top K shortest paths
+between a start and end airport, excluding specific nodes/edges gracefully.
+"""
 import time
 from app.services.data_store import flight_graph
 from app.services.dijkstra import dijkstra_for_yens, MinHeap
@@ -7,13 +12,17 @@ def find_alternative_routes_yens(start, end, max_connections=3, K=10):
     print(f"  [YEN] Starting Yen's Algorithm: {start} -> {end} (Top {K} routes, max {max_connections} connections)")
     t_start = time.time()
 
+    # A will store the accepted k shortest paths
     A = []
     
     # OPTIMIZATION 1: Use the custom MinHeap instead of a List
     B_heap = MinHeap()
     push_count_b = 0  # Tie-breaker to prevent dictionary comparisons in the heap
+    
+    # B_paths keeps track of paths already in B to prevent adding duplicates
     B_paths = set()
 
+    # Determine the shortest path from the start to the end using Dijkstra's algorithm
     path, tot_time, tot_dist, tot_price = dijkstra_for_yens(start, end, set(), set(), criteria='price')
     if not path:
         return []
@@ -34,7 +43,9 @@ def find_alternative_routes_yens(start, end, max_connections=3, K=10):
         root_time, root_dist, root_price = 0, 0.0, 0.0
 
         for i in range(len(A[k - 1]["path"]) - 1):
+            # The node where the new path will branch off
             spur_node = A[k - 1]["path"][i]
+            # The sequence of nodes from the start point to the spur node
             root_path = A[k - 1]["path"][:i + 1]
 
             ignored_edges = set()

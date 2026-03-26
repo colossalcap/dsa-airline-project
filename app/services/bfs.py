@@ -1,3 +1,8 @@
+"""
+Breadth-First Search (BFS) service.
+Implements a highly optimized BFS algorithm using an Unrolled Linked List (BlockQueue)
+to find all reachable airports within a given number of maximum flight stops.
+"""
 from app.services.data_store import flight_graph, airport_names
 
 
@@ -87,16 +92,19 @@ def find_reachable_airports_bfs(start, max_stops=2):
     nodes_dequeued = 0
 
     queue = BlockQueue()
-    queue.enqueue((start, 0))
+    queue.enqueue((start, 0)) # Store tuples of (current_airport_iata, current_depth)
 
+    # Process nodes level by level up to max_stops
     while queue:
         current, depth = queue.dequeue()
         nodes_dequeued += 1
 
+        # Stop exploring this branch if it exceeds the maximum allowed stops
         if depth > max_stops:
             break
 
         if current in flight_graph:
+            # Explore all outgoing flights from the current airport
             for neighbor, dur, dist, price in flight_graph[current]:
                 if neighbor not in visited:
                     visited.add(neighbor)
