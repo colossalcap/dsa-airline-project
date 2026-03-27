@@ -44,6 +44,7 @@ def install_requirements():
         print("    pip install -r requirements.txt")
     print("=" * 50)
 
+
     return all_ok
 
 
@@ -53,7 +54,8 @@ if __name__ == "__main__":
         try:
             input("\n  Press ENTER to start the app...")
             print("\nStarting app...\n")
-            subprocess.run([sys.executable, "main.py"])
+            subprocess.run([sys.executable, "RunApp.py"])
         except KeyboardInterrupt:
             print("\n  Cancelled by user. To start the app manually, run:")
-            print("    python main.py\n")
+            print("    python RunApp.py\n")
+            

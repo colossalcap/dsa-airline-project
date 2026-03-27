@@ -54,7 +54,7 @@ window.goBackFromDetails = goBackFromDetails;
 // ===================================================================
 async function loadAirportOptions() {
     try {
-        const res = await fetch('/api/get_airport_options');
+        const res = await fetch('/api/airport_options');
         const data = await res.json();
         if (data.code === 1 && data.options) {
             state.globalAirports = data.options;

@@ -1,3 +1,8 @@
+"""
+Sorting service.
+Provides implementations of sorting algorithms, such as a custom Quick Sort,
+useful for ranking query results.
+"""
 import random
 import time
 
@@ -9,20 +14,25 @@ def quick_sort(arr, key_func):
 
     def _partition(items, low, high):
         rand_idx = random.randint(low, high)
+        # Swap random pivot to the end
         items[rand_idx], items[high] = items[high], items[rand_idx]
 
         pivot = key_func(items[high])
-        i = low - 1
+        i = low - 1  # i will keep track of the boundary for elements smaller than the pivot
+        
         for j in range(low, high):
             comparison_count[0] += 1
             if key_func(items[j]) <= pivot:
                 i += 1
                 items[i], items[j] = items[j], items[i]
+                
+        # Move the pivot to its correct sorted position
         items[i + 1], items[high] = items[high], items[i + 1]
         partition_count[0] += 1
         return i + 1
 
     def _quick_sort_recursive(items, low, high):
+        """Recursively partition and sort the segments."""
         if low < high:
             pi = _partition(items, low, high)
             _quick_sort_recursive(items, low, pi - 1)
