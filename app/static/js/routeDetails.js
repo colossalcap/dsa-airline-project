@@ -63,7 +63,7 @@ export function showRouteDetails(routeData, originPanelId) {
             <div class="timeline-item ${itemClass}">
                 <div class="timeline-marker"></div>
                 <div class="timeline-content">
-                    <span class="timeline-airport" style="line-height: 1.2; display: block; margin-bottom: 2px;">
+                    <span class="timeline-airport">
                         ${stopBadge}${name}
                     </span>
                     ${cityStr ? `<span class="timeline-city">${cityStr}</span>` : ''}
@@ -91,7 +91,6 @@ export function showRouteDetails(routeData, originPanelId) {
 
             timelineHtml += `
                 <div class="timeline-leg-info">
-                    <span><i class="fa fa-plane"></i> Leg ${i + 1}</span>
                     <span><strong>${distVal} km</strong></span>
                 </div>
             `;
@@ -104,39 +103,15 @@ export function showRouteDetails(routeData, originPanelId) {
     const layoverText = layoverCount <= 0 ? 'Direct Flight' : `${layoverCount} Stop${layoverCount > 1 ? 's' : ''}`;
 
     area.innerHTML = `
-        <div class="details-summary" style="padding: 16px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); padding-bottom: 12px;">
-                <div>
-                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Flight Path</span>
-                    <span style="font-weight: 800; font-size: 18px;"><i class="fa fa-plane-departure" style="color: #1B67F6; margin-right: 6px;"></i> ${nodes[0]} → ${nodes[nodes.length - 1]}</span>
-                </div>
-                <div style="text-align: right;">
-                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Total Price</span>
-                    <span style="color: #10B981; font-weight: 800; font-size: 18px;">$${price.toFixed(2)}</span>
-                </div>
+        <div class="details-summary">
+            <div class="top">
+                <span><i class="fa fa-plane-departure"></i> ${nodes[0]} → ${nodes[nodes.length - 1]}</span>
+                <span>$${price.toFixed(2)}</span>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 14px;">
-                <div>
-                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Distance</span>
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
-                        <i class="fa fa-route" style="color: #1B67F6;"></i>
-                        <span>${distTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km</span>
-                    </div>
-                </div>
-                <div>
-                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Time</span>
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
-                        <i class="fa fa-clock-o" style="color: #1B67F6;"></i>
-                        <span>${formatTime(timeTotal)}</span>
-                    </div>
-                </div>
-                <div>
-                    <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Layovers</span>
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
-                        <i class="fa fa-exchange" style="color: #1B67F6;"></i>
-                        <span>${layoverText}</span>
-                    </div>
-                </div>
+            <div class="bottom">
+                <div><i class="fa fa-route"></i><span>${distTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km</span></div>
+                <div><i class="fa fa-clock-o"></i><span>${formatTime(timeTotal)}</span></div>
+                <div><i class="fa fa-exchange"></i><span>${layoverText}</span></div>
             </div>
         </div>
         ${timelineHtml}

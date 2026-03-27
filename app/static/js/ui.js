@@ -56,12 +56,12 @@ export function handleInputChange(e, inputId) {
         if (inputId === 'startAirport') {
             if (state.tempStartMarker) fadeOutAndRemove(state.tempStartMarker);
             state.tempStartMarker = L.marker([lat, lng], {
-                icon: L.divIcon({ html: `<div class="premium-marker marker-start"><i class="fa fa-plane"></i></div>`, className: '' })
+                icon: L.divIcon({ html: `<div class="premium-marker marker-start"><i class="fa fa-plane-departure"></i></div>`, className: '' })
             }).addTo(state.map).bindTooltip("Departure Set", { permanent: true, direction: "top" }).openTooltip();
         } else {
             if (state.tempEndMarker) fadeOutAndRemove(state.tempEndMarker);
             state.tempEndMarker = L.marker([lat, lng], {
-                icon: L.divIcon({ html: `<div class="premium-marker marker-end"><i class="fa fa-plane"></i></div>`, className: '' })
+                icon: L.divIcon({ html: `<div class="premium-marker marker-end"><i class="fa fa-plane-arrival"></i></div>`, className: '' })
             }).addTo(state.map).bindTooltip("Arrival Set", { permanent: true, direction: "top" }).openTooltip();
         }
         state.map.flyTo([lat, lng], 5, { duration: 1.5 });

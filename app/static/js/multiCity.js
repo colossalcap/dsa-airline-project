@@ -179,11 +179,11 @@ export async function queryMultiCity() {
             }
 
             area.innerHTML = `
-                <div class="result-card selected" style="border-left: 5px solid #1B67F6; padding: 15px; border-radius: 8px; text-align: left; margin: 0;">
+                <div class="result-card selected">
                     
                     <div class="first" style="display:none;"><div class="title">Multi-City Planner</div></div>
                     
-                    <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket"></i> Multi-City Itinerary</div>
+                    <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; text-align: center;"><i class="fa fa-ticket" style="color:#1B67F6; margin-right: 6px;"></i> Multi-City Itinerary</div>
                     
                     ${pathHtml}
                     
