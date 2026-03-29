@@ -147,7 +147,7 @@ source venv/bin/activate
 ### 2. Start the Flask Server
 
 ```bash
-python main.py
+python RunApp.py
 ```
 
 You should see output similar to:
@@ -239,7 +239,7 @@ Then try activating the venv again.
 
 **Fix:**
 1. Check that the file exists: `dir data\` (Windows) or `ls data/` (macOS/Linux). You should see `airline_routes.json`.
-2. Make sure you're running `python main.py` from inside the `dsa-airline-project/` directory, **not** from a parent or child folder.
+2. Make sure you're running `python RunApp.py` from inside the `dsa-airline-project/` directory, **not** from a parent or child folder.
 
 ---
 
@@ -258,7 +258,7 @@ Then try activating the venv again.
 
 **Cause:** The Quick Sort algorithm may hit Python's default recursion limit on very large datasets.
 
-**Fix:** The app already sets `sys.setrecursionlimit(10000)` in `main.py`. If you still hit this error, you can increase the value, but be cautious — very large values can cause a stack overflow crash.
+**Fix:** The app already sets `sys.setrecursionlimit(10000)` in `app/__init__.py`. If you still hit this error, you can increase the value, but be cautious — very large values can cause a stack overflow crash.
 
 
 
@@ -270,7 +270,7 @@ Then try activating the venv again.
 - **Option A:** Stop the other process using port 5000.
   - Windows: `netstat -ano | findstr :5000` to find the PID, then `taskkill /PID <pid> /F`.
   - macOS/Linux: `lsof -i :5000` then `kill <pid>`.
-- **Option B:** Change the port in `main.py`:
+- **Option B:** Change the port in `RunApp.py`:
   ```python
   app.run(debug=True, port=5001)  # use a different port
   ```

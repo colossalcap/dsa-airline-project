@@ -2,6 +2,10 @@ import subprocess
 import sys
 import os
 
+# Ensure the script runs from the project root regardless of how it's executed
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(project_root)
+
 def install_requirements():
     print("=" * 50)
     print("Checking dependencies...")
