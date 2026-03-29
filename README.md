@@ -8,9 +8,10 @@ A Flask-based web application that finds optimal flight routes between airports 
 
 ```
 dsa-airline-project/
-├── main.py                       # Entry point (calls the app factory)
+├── RunApp.py                     # Entry point (calls the app factory)
 ├── requirements.txt
 ├── README.md
+├── .gitignore
 ├── app/                          # Flask application package
 │   ├── __init__.py               # App factory: create_app()
 │   ├── routes/                   # Route handlers
@@ -43,9 +44,12 @@ dsa-airline-project/
 │           └── routeDetails.js   # Panel 5: Detailed route timeline view
 |
 ├── scripts/
-│   └── setup_run.py              # Dependency checker & launcher
+│   ├── BFS_benchmarking/             # BFS algorithm performance tests
+│   ├── Dijkstra_benchmarking/        # Dijkstra algorithm performance tests
+│   └── setup_run.py                  # Dependency checker & launcher
 ├── data/
 │   └── airline_routes.json       # Airport and route dataset
+├── utils/                        # Utility scripts (Python)
 └── venv/                         # Virtual environment (not committed)
 ```
 
